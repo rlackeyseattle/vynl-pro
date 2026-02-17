@@ -10,7 +10,7 @@ interface PageProps {
 }
 
 export default async function ProfilePage({ params }: PageProps) {
-    const { handle } = params;
+    const { handle } = await params;
     const session = await auth();
 
     const profile = await prisma.profile.findUnique({
