@@ -1,0 +1,124 @@
+{
+    "albums": [
+        {
+            "id": "victory",
+            "title": "Victory To The Villains",
+            "year": "2023",
+            "cover": "/graphics/albums/victory_cover.png",
+            "tracks": [
+                {
+                    "title": "Static In The Wires",
+                    "file": "/music/victory/01 Static In The Wires.mp3"
+                },
+                {
+                    "title": "November",
+                    "file": "/music/victory/02 November.mp3"
+                },
+                {
+                    "title": "Saboteur",
+                    "file": "/music/victory/03 Saboteur.mp3"
+                },
+                {
+                    "title": "Collapse State",
+                    "file": "/music/victory/04 Collapse State.mp3"
+                },
+                {
+                    "title": "Victory To The Villains",
+                    "file": "/music/victory/05 Victory To The Villains.mp3"
+                },
+                {
+                    "title": "Hands Of Kali",
+                    "file": "/music/victory/06 Hands Of Kali.mp3"
+                },
+                {
+                    "title": "Faultlines",
+                    "file": "/music/victory/07 Faultlines.mp3"
+                }
+            ]
+        },
+        {
+            "id": "lowfires",
+            "title": "Low Fires LP",
+            "year": "2025",
+            "cover": "/graphics/albums/lowfires_cover.png",
+            "tracks": [
+                {
+                    "title": "Ain't No Grave Gonna Hold Me Down",
+                    "file": "/music/lowfires/Ain't No Grave Gonna Hold Me Down.mp3"
+                },
+                {
+                    "title": "Even Jesus Don't Knock No More",
+                    "file": "/music/lowfires/Even Jesus Don't Knock No More.mp3"
+                },
+                {
+                    "title": "Gasoline Gospel",
+                    "file": "/music/lowfires/Gasoline Gospel.mp3"
+                },
+                {
+                    "title": "In The Snow",
+                    "file": "/music/lowfires/In The Snow.mp3"
+                },
+                {
+                    "title": "Low Fires",
+                    "file": "/music/lowfires/Low Fires.mp3"
+                },
+                {
+                    "title": "No Medals For The Sober",
+                    "file": "/music/lowfires/No Medals For The Sober.mp3"
+                },
+                {
+                    "title": "Omen In A Bottle",
+                    "file": "/music/lowfires/Omen In A Bottle.mp3"
+                },
+                {
+                    "title": "She Stayed",
+                    "file": "/music/lowfires/She Stayed.mp3"
+                },
+                {
+                    "title": "Where The Devil Waits",
+                    "file": "/music/lowfires/Where The Devil Waits.mp3"
+                },
+                {
+                    "title": "Whiskey For A Headstone",
+                    "file": "/music/lowfires/Whiskey For A Headstone.mp3"
+                }
+            ]
+        },
+        {
+            "id": "surrender",
+            "title": "Surrender With A Smile",
+            "year": "2022",
+            "cover": "/graphics/albums/surrender_cover.png",
+            "tracks": [
+                {
+                    "title": "Atoms",
+                    "file": "/music/surrender/Atoms MP3.mp3"
+                },
+                {
+                    "title": "Fractals",
+                    "file": "/music/surrender/Fractals MP3.mp3"
+                },
+                {
+                    "title": "Ghosts of Kali",
+                    "file": "/music/surrender/Ghosts of Kali MP3.mp3"
+                },
+                {
+                    "title": "July",
+                    "file": "/music/surrender/July MP3.mp3"
+                },
+                {
+                    "title": "Surrender With A Smile",
+                    "file": "/music/surrender/Surrender With A Smile MP3.mp3"
+                },
+                {
+                    "title": "Vanguard",
+                    "file": "/music/surrender/Vanguard MP3.mp3"
+                },
+                {
+                    "title": "Voyage en' Voiture",
+                    "file": "/music/surrender/Voyage en' Voiture MP3.mp3"
+                }
+            ]
+        }
+    ]
+}

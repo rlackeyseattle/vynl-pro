@@ -1,0 +1,133 @@
+/* MySpace Nostalgia - Modern Implementation */
+:root {
+    --myspace-blue: #6699cc;
+    --myspace-orange: #ff6600;
+    --myspace-bg: #e5e5e5;
+    --myspace-border: #6699cc;
+    --myspace-text: #000000;
+    --myspace-link: #003366;
+}
+
+.myspace-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+    color: var(--myspace-text);
+    padding-bottom: 50px;
+}
+
+.myspace-header {
+    height: 80px;
+    background-color: var(--myspace-blue);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.profile-layout {
+    display: flex;
+    padding: 20px;
+    gap: 20px;
+}
+
+.left-col {
+    width: 300px;
+}
+
+.right-col {
+    flex: 1;
+}
+
+/* Classic MySpace Boxes */
+.ms-box {
+    border: 1px solid var(--myspace-border);
+    margin-bottom: 15px;
+}
+
+.ms-box-title {
+    background-color: var(--myspace-blue);
+    color: #fff;
+    padding: 3px 10px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.ms-box-content {
+    padding: 10px;
+}
+
+.contact-box {
+    background-color: #fff;
+    border: 2px solid var(--myspace-blue);
+    padding: 10px;
+    margin-bottom: 20px;
+}
+
+.contact-box h3 {
+    color: var(--myspace-blue);
+    margin-top: 0;
+    font-size: 16px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 5px;
+}
+
+.grid-top8 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    text-align: center;
+}
+
+.friend-item img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border: 1px solid #ccc;
+}
+
+.friend-item span {
+    font-size: 11px;
+    color: var(--myspace-link);
+}
+
+/* Music Player Styling */
+.ms-player {
+    background: #333;
+    color: #fff;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+
+.player-header {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #444;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.track-list {
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 13px;
+}
+
+.track-item {
+    padding: 5px;
+    cursor: pointer;
+    border-bottom: 1px solid #444;
+}
+
+.track-item:hover {
+    background: #444;
+}
+
+.track-item.active {
+    color: var(--myspace-orange);
+    background: #444;
+}
