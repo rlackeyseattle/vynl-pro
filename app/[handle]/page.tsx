@@ -4,9 +4,9 @@ import { auth } from '@/auth';
 import ProfileClient from './ProfileClient';
 
 interface PageProps {
-    params: {
+    params: Promise<{
         handle: string;
-    };
+    }>;
 }
 
 export default async function ProfilePage({ params }: PageProps) {
