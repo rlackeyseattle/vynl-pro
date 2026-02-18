@@ -66,21 +66,21 @@ export default function Home() {
 
           <form
             onSubmit={(e) => { e.preventDefault(); handleInviteSubmit(); }}
-            className={`relative flex items-center bg-[#0a0a0a] border rounded-full p-1 pl-6 shadow-2xl transition-colors ${error ? 'border-red-500/50' : 'border-white/10'}`}
+            className={`relative z-50 flex items-center bg-[#0a0a0a] border rounded-full p-1 pl-6 shadow-2xl transition-colors ${error ? 'border-red-500/50' : 'border-white/10'}`}
           >
-            <Lock size={14} className="text-neutral-600 mr-3" />
+            <Lock size={14} className="text-neutral-600 mr-3 flex-shrink-0" />
             <input
               type="text"
               placeholder="ENTER INVITE CODE"
               value={inviteCode}
               onChange={(e) => { setInviteCode(e.target.value.toUpperCase()); setError(""); }}
               disabled={isPending}
-              className="bg-transparent border-none text-sm tracking-widest w-full focus:ring-0 text-white placeholder-neutral-700 font-mono uppercase"
+              className="bg-transparent border-none text-sm tracking-widest flex-1 min-w-0 focus:ring-0 text-white placeholder-neutral-700 font-mono uppercase"
             />
             <button
               type="submit"
               disabled={isPending}
-              className="bg-white text-black p-3 rounded-full hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-white text-black p-3 rounded-full hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 relative z-20 cursor-pointer"
             >
               {isPending ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
             </button>
