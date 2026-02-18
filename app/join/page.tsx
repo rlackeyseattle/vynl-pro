@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useTransition, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import React, { useState, useTransition, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import { registerUser } from "@/actions/register";
 import { signIn } from "next-auth/react";
-import { ArrowRight, Lock, Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import SocialLogin from "@/components/auth/SocialLogin";
 
 export default function JoinPage() {
     return (
@@ -22,27 +23,16 @@ export default function JoinPage() {
 
 function JoinContent() {
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const initialCode = searchParams.get("code") || "";
-
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
 
-    // Initialize state with initialCode, update if searchParams change
     const [formData, setFormData] = useState({
         name: "",
         email: "",
         password: "",
         handle: "",
-        inviteCode: initialCode,
     });
-
-    useEffect(() => {
-        if (initialCode) {
-            setFormData(prev => ({ ...prev, inviteCode: initialCode.toUpperCase() }));
-        }
-    }, [initialCode]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -99,89 +89,79 @@ function JoinContent() {
                 className="w-full max-w-md relative z-10"
             >
                 <div className="mb-8 text-center">
-                    <h1 className="text-4xl font-black tracking-tighter mb-2">ACCESS GRANTED</h1>
-                    <p className="text-xs text-neutral-500 tracking-[0.2em] uppercase">Initialize Your Profile</p>
+                    <h1 className="text-4xl font-black tracking-tighter mb-2">INITIALIZE PROFILE</h1>
+                    <p className="text-xs text-neutral-500 tracking-[0.2em] uppercase">Join the Network</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="bg-[#0a0a0a]/50 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
 
-                    {/* Invite Code Read-only or Public Badge */}
-                    {formData.inviteCode === "PUBLIC" ? (
-                        <div className="w-full bg-white/5 border border-white/10 rounded-full py-4 px-6 text-center text-sm font-mono text-white/50 tracking-widest uppercase mb-6">
-                            PUBLIC ACCESS MODE ACTIVE
-                        </div>
-                    ) : (
-                        <div className="relative group">
-                            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                                <Lock size={14} className="text-green-500" />
-                            </div>
-                            <input
-                                type="text"
-                                name="inviteCode"
-                                value={formData.inviteCode}
-                                readOnly
-                                className="w-full bg-white/5 border border-green-500/30 rounded-full py-4 pl-10 pr-6 text-sm font-mono text-green-400 placeholder-neutral-700 outline-none focus:border-green-500 transition-colors uppercase tracking-widest cursor-not-allowed"
-                            />
-                            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                                <CheckCircle size={14} className="text-green-500" />
-                            </div>
-                        </div>
-                    )}
+                    <SocialLogin />
 
-                    <Input
-                        placeholder="FULL NAME"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                    />
+                    <div className="my-6 text-center text-xs text-neutral-600 font-bold tracking-widest uppercase flex items-center gap-4">
+                        <div className="h-px bg-white/10 flex-1" />
+                        OR MANUAL ENTRY
+                        <div className="h-px bg-white/10 flex-1" />
+                    </div>
 
-                    <Input
-                        placeholder="HANDLE"
-                        name="handle"
-                        value={formData.handle}
-                        onChange={handleChange}
-                        prefix="@" // Custom prefix logic
-                    />
+                    <form onSubmit={handleSubmit} className="space-y-4">
 
-                    <Input
-                        type="email"
-                        placeholder="EMAIL ADDRESS"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                    />
+                        <Input
+                            placeholder="FULL NAME"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleChange}
+                        />
 
-                    <Input
-                        type="password"
-                        placeholder="PASSWORD"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                    />
+                        <Input
+                            placeholder="HANDLE"
+                            name="handle"
+                            value={formData.handle}
+                            onChange={handleChange}
+                            prefix="@"
+                        />
 
-                    {error && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-2xl text-xs font-bold flex items-center gap-2"
+                        <Input
+                            type="email"
+                            placeholder="EMAIL ADDRESS"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                        />
+
+                        <Input
+                            type="password"
+                            placeholder="PASSWORD"
+                            name="password"
+                            value={formData.password}
+                            onChange={handleChange}
+                        />
+
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2"
+                            >
+                                <AlertCircle size={14} /> {error}
+                            </motion.div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={isPending || success}
+                            className="w-full bg-white text-black font-bold tracking-widest uppercase py-4 rounded-full hover:bg-neutral-200 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
                         >
-                            <AlertCircle size={14} /> {error}
-                        </motion.div>
-                    )}
+                            {isPending ? <Loader2 size={16} className="animate-spin" /> : (success ? "INITIALIZING..." : <span className="flex items-center gap-2">CREATE IDENTITY <ArrowRight size={16} /></span>)}
+                        </button>
 
-                    <button
-                        type="submit"
-                        disabled={isPending || success}
-                        className="w-full bg-white text-black font-bold tracking-widest uppercase py-4 rounded-full hover:bg-neutral-200 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                        {isPending ? <Loader2 size={16} className="animate-spin" /> : (success ? "INITIALIZING..." : <span className="flex items-center gap-2">ENTER <ArrowRight size={16} /></span>)}
-                    </button>
+                        <div className="text-center mt-6">
+                            <p className="text-[10px] text-neutral-500 font-mono">
+                                ALREADY INITIALIZED? <Link href="/login" className="text-white hover:underline ml-1">LOG IN</Link>
+                            </p>
+                        </div>
 
-                    <p className="text-center text-[10px] text-neutral-600 font-mono mt-4">
-                        ALREADY INITIALIZED? <Link href="/login" className="text-white hover:underline">LOG IN</Link>
-                    </p>
-
-                </form>
+                    </form>
+                </div>
 
             </motion.div>
         </div>
@@ -199,7 +179,7 @@ function Input({ prefix, ...props }: React.InputHTMLAttributes<HTMLInputElement>
             )}
             <input
                 {...props}
-                className={`w-full bg-[#0a0a0a] border border-white/10 rounded-full py-4 ${prefix ? 'pl-10' : 'pl-6'} pr-6 text-sm font-bold text-white placeholder-neutral-700 outline-none focus:border-white/40 transition-colors uppercase tracking-wider`}
+                className={`w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-4 ${prefix ? 'pl-10' : 'pl-6'} pr-6 text-sm font-bold text-white placeholder-neutral-600 outline-none focus:border-white/40 transition-colors uppercase tracking-wider`}
             />
         </div>
     )

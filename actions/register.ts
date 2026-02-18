@@ -58,24 +58,35 @@ export async function registerUser(formData: FormData) {
                 data: {
                     name,
                     email,
-                    image: `https://api.dicebear.com/9.x/avataaars/svg?seed=${handle}`, // Default avatar
+                    password: hashedPassword, // Store hashed password directly on User model
+                    image: `https://api.dicebear.com/9.x/avataaars/svg?seed=${handle}`,
                 },
             });
 
-            // Create Account (Credentials) - NextAuth v5 manual linking
-            // Actually, NextAuth Credentials provider doesn't strictly need an Account record if we implement authorize() to check User table directly.
-            // But let's stick to checking User table for password hash.
-            // We'll verify password against the one we store... wait, the User model doesn't have a password field.
-            // I need to add a password field to the User model? Or use the Account model?
-            // Standard NextAuth schema usually puts password on User or assumes an external provider.
-            // Since I'm migrating to real auth, I'll add `password` to `User` model temporarily or properly.
-            // Let's look at schema again. User has no password.
-            // I will add `password` to User model in a separate migration first? 
-            // OR I can store it in the Account model... but Credentials provider usually looks up User.
+            // Create Profile
+            await tx.profile.create({
+                data: {
+                    userId: user.id,
+                    handle: handle,
+                    bio: "New VYNL.PRO Member",
+                    musicianType: "Artist",
+                }
+            });
 
-            // Let's add `password` to User model. It's the standard way for simple credentials auth.
+            // Claim Invite Code (if provided and NOT 'PUBLIC')
+            if (normalizedInviteCode && normalizedInviteCode !== "PUBLIC") {
+                // We need to use 'claimInviteCode' logic here, but since we are in a transaction,
+                // we should ideally use 'tx' to be safe, but 'claimInviteCode' uses 'prisma'.
+                // To stay atomic, we should reimplement the simple update here using 'tx'.
 
-            throw new Error("Schema update needed: User model missing password field");
+                const invite = await tx.inviteCode.findUnique({ where: { code: normalizedInviteCode } });
+                if (invite && !invite.isUsed) {
+                    await tx.inviteCode.update({
+                        where: { code: normalizedInviteCode },
+                        data: { isUsed: true, usedById: user.id }
+                    });
+                }
+            }
         });
 
         return { success: true };

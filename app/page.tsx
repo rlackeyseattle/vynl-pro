@@ -37,34 +37,22 @@ export default function Home() {
           </p>
         </motion.div>
 
-        {/* Gatekeeper Input */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-          className="w-full max-w-sm relative group"
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-full pointer-events-none" />
-
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => router.push("/join?code=PUBLIC")}
-            className="group relative flex items-center justify-center gap-3 bg-white text-black px-8 py-4 rounded-full font-bold text-sm tracking-[0.2em] shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_-15px_rgba(255,255,255,0.5)] transition-all z-50 cursor-pointer"
+        <div className="flex flex-col gap-4 w-full max-w-sm">
+          <Link
+            href="/join"
+            className="group relative flex items-center justify-center gap-3 bg-white text-black px-8 py-4 rounded-full font-bold text-sm tracking-[0.2em] shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_-15px_rgba(255,255,255,0.5)] transition-all z-50 transform hover:scale-105"
           >
-            <span className="relative z-10">ENTER SYSTEM</span>
+            <span className="relative z-10">GET STARTED</span>
             <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform" />
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12 translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out" />
-          </motion.button>
+          </Link>
 
-          <div className="mt-6">
-            <p className="text-[10px] text-neutral-500 font-mono">
-              PUBLIC ACCESS ENABLED • NO INVITE REQUIRED
-            </p>
-          </div>
-
-
-        </motion.div>
+          <Link
+            href="/login"
+            className="text-xs text-neutral-500 hover:text-white transition-colors uppercase tracking-widest"
+          >
+            Member Login
+          </Link>
+        </div>
 
       </main>
 
@@ -79,7 +67,7 @@ export default function Home() {
         </div>
         <p>© 2026 Rob Lackey • Built for the Music Community</p>
       </footer>
-    </div>
+    </div >
   );
 }
 

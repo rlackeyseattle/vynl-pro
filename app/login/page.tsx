@@ -4,10 +4,21 @@ import React, { useState } from 'react';
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
+import SocialLogin from "@/components/auth/SocialLogin";
+import { Suspense } from "react";
+
 export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-gray-100 flex items-center justify-center font-sans"><div className="animate-pulse text-gray-400">Loading...</div></div>}>
+            <LoginContent />
+        </Suspense>
+    );
+}
+
+function LoginContent() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [inviteCode, setInviteCode] = useState('');
+    // const [inviteCode, setInviteCode] = useState(''); // Removed
     const [error, setError] = useState('');
     const router = useRouter();
 
@@ -18,7 +29,7 @@ export default function LoginPage() {
         const result = await signIn("credentials", {
             email,
             password,
-            inviteCode,
+            // inviteCode,
             redirect: false,
         });
 
@@ -37,6 +48,12 @@ export default function LoginPage() {
                 </header>
 
                 <div className="p-8">
+                    <SocialLogin />
+
+                    <div className="my-6 text-center text-xs text-gray-400 font-bold tracking-widest uppercase">
+                        — OR USE CREDENTIALS —
+                    </div>
+
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
                             <label htmlFor="email" className="block text-xs font-bold mb-1 uppercase tracking-wide text-gray-500">Email</label>
@@ -62,17 +79,7 @@ export default function LoginPage() {
                                 placeholder="YOUR PASSWORD"
                             />
                         </div>
-                        <div className="bg-orange-50 p-4 rounded border border-orange-100">
-                            <label className="block text-xs font-bold mb-2 text-orange-800 uppercase tracking-wide">Invite Code (Required)</label>
-                            <input
-                                type="text"
-                                className="w-full border border-orange-200 rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
-                                value={inviteCode}
-                                onChange={(e) => setInviteCode(e.target.value)}
-                                required
-                                placeholder="ENTER CODE"
-                            />
-                        </div>
+
 
                         {error && <p className="text-red-600 text-xs font-bold bg-red-50 p-2 rounded">{error}</p>}
 

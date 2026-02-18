@@ -1,11 +1,15 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
+import Discord from "next-auth/providers/discord";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     providers: [
+        Google,
+        Discord,
         Credentials({
             name: "Credentials",
             credentials: {
@@ -26,10 +30,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
                     if (!user || !user.password) return null;
 
-                    const passwordsMatch = await bcrypt.compare(password, user.password);
+                    const passwordsMatch = await bcrypt.compare(password, user.password as string);
 
                     if (passwordsMatch) {
-                        return user;
+                        return {
+                            id: user.id,
+                            name: user.name,
+                            email: user.email,
+                            image: user.image,
+                        };
                     }
                 }
 
