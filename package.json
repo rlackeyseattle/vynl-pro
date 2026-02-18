@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.2",
     "axios": "^1.13.5",
     "bcryptjs": "^3.0.3",
     "framer-motion": "^12.34.1",
@@ -16,8 +17,7 @@
     "next-auth": "^5.0.0-beta.25",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "zod": "^4.3.6",
-    "@prisma/client": "^6.19.2"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@auth/prisma-adapter": "^2.11.1",
@@ -29,6 +29,10 @@
     "postcss": "^8.5.6",
     "prisma": "^6.19.2",
     "tailwindcss": "^4.1.18",
+    "tsx": "^4.21.0",
     "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }

@@ -67,7 +67,8 @@ async function main() {
             profile: {
                 create: {
                     handle: 'roblackey',
-                    bio: 'Just a dude who likes tech and music baby.',
+                    bio: 'Just a dude who likes tech and music baby. Check out my latest release "Low Fires".',
+                    avatarUrl: '/graphics/profile/roblackey_main.jpg',
                     interests: JSON.stringify({
                         general: 'Tech, Music, Production, Coding, Coffee.',
                         music: 'Analog warmth, digital precision, indie rock, acoustic vibes.',
@@ -80,7 +81,7 @@ async function main() {
                         'Custom Mechanical Keyboards',
                         'A growing collection of vinyl'
                     ]),
-                    musicianType: 'Multi-instrumentalist',
+                    musicianType: 'Songwriter / Multi-instrumentalist',
                 }
             }
         }
