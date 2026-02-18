@@ -91,10 +91,10 @@ export async function registerUser(formData: FormData) {
 
         return { success: true };
     } catch (error: any) {
-        if (error.message.includes("Schema update needed")) {
-            return { success: false, message: "System Error: Database schema mismatch" };
-        }
         console.error("Registration error:", error);
-        return { success: false, message: "Registration failed" };
+        return {
+            success: false,
+            message: error.message || "Registration failed. Please try again."
+        };
     }
 }
