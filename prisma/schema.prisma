@@ -42,12 +42,17 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  password      String?
   accounts      Account[]
   sessions      Session[]
   profile       Profile?
   posts         Post[]
   followedBy    Follow[]  @relation("following")
   following     Follow[]  @relation("follower")
+  
+  // Invite System Relations
+  usedInvite    InviteCode? @relation("UsedInvite")
+  createdInvites InviteCode[] @relation("CreatedInvites")
 }
 
 model VerificationToken {
@@ -147,4 +152,17 @@ model SetlistSong {
   song      Song    @relation(fields: [songId], references: [id], onDelete: Cascade)
 
   @@id([setlistId, songId])
+}
+
+// Invite System
+model InviteCode {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  isUsed      Boolean   @default(false)
+  usedById    String?   @unique // One user per invite
+  usedBy      User?     @relation("UsedInvite", fields: [usedById], references: [id])
+  createdById String?
+  createdBy   User?     @relation("CreatedInvites", fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?
 }

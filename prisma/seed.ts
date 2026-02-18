@@ -153,6 +153,24 @@ async function main() {
         ]
     });
 
+    // Seed Invite Codes
+    const inviteCodes = [
+        "VYNL-GOLD-2026",
+        "VYNL-ARTIST-VIP",
+        "VYNL-DEV-TEST"
+    ];
+
+    for (const code of inviteCodes) {
+        await prisma.inviteCode.upsert({
+            where: { code },
+            update: {},
+            create: {
+                code,
+                isUsed: false
+            }
+        });
+    }
+
     console.log("Seeding complete!");
 }
 

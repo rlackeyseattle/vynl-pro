@@ -1,276 +1,225 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from 'react';
-import DiscographyPlayer from '../../components/DiscographyPlayer';
-import discographyData from '../../lib/discography_data.json';
+import React, { useState, useEffect } from 'react';
+import { notFound } from 'next/navigation';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import {
+    Instagram, Twitter, Globe, Mail, Music, Disc, Mic2,
+    Layers, Cpu, Zap, ArrowDown, Play, Share2, LogOut
+} from 'lucide-react';
 import { signOut } from "next-auth/react";
-import { LogOut, User as UserIcon, Music, Info, Mail, ChevronDown, PlayCircle } from 'lucide-react';
-import { ThemeConfig, DEFAULT_THEME } from '../../types/theme';
-import { motion } from 'framer-motion';
+import { Profile } from '@prisma/client';
+import { EPK_THEME, ThemeConfig, DEFAULT_THEME } from '../../types/theme';
 
-interface ProfileProps {
-    profile: {
-        handle: string;
-        bio: string | null;
-        musicianType: string | null;
-        avatarUrl: string | null;
-        interests: string | null;
-        gear: string | null;
-        themeConfig: string | null;
-        user: {
-            name: string | null;
-        }
+// Extend the Prisma Profile type to include the User relation we fetch
+interface ProfileWithUser extends Profile {
+    user: {
+        name: string | null;
+        email: string | null;
     };
-    sessionUser: {
+}
+
+interface ProfileClientProps {
+    profile: ProfileWithUser;
+    sessionUser?: {
         name?: string | null;
         email?: string | null;
     } | null;
 }
 
-export default function ProfileClient({ profile, sessionUser }: ProfileProps) {
-    const interests = profile.interests ? JSON.parse(profile.interests) : {};
-    const gear = profile.gear ? JSON.parse(profile.gear) : [];
-    const [scrolled, setScrolled] = useState(false);
+export default function ProfileClient({ profile, sessionUser }: ProfileClientProps) {
+    const { scrollY } = useScroll();
+    const y1 = useTransform(scrollY, [0, 500], [0, 200]);
+    const opacityHero = useTransform(scrollY, [0, 400], [1, 0]);
 
-    // Handle scroll for sticky nav
-    useEffect(() => {
-        const handleScroll = () => {
-            setScrolled(window.scrollY > 50);
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-
-    // Parse theme config with fallback merging
-    const theme: ThemeConfig = useMemo(() => {
-        if (!profile.themeConfig) return DEFAULT_THEME;
-        try {
-            const parsed = JSON.parse(profile.themeConfig);
-            return {
-                ...DEFAULT_THEME,
-                ...parsed,
-                colors: { ...DEFAULT_THEME.colors, ...(parsed.colors || {}) },
-                fonts: { ...DEFAULT_THEME.fonts, ...(parsed.fonts || {}) },
-                layout: { ...DEFAULT_THEME.layout, ...(parsed.layout || {}) },
-                hero: { ...DEFAULT_THEME.hero, ...(parsed.hero || {}) }
-            };
-        } catch (e) {
-            console.error("Failed to parse theme config", e);
-            return DEFAULT_THEME;
+    // Parse Theme
+    let theme: ThemeConfig = DEFAULT_THEME;
+    try {
+        if (profile.themeConfig) {
+            theme = JSON.parse(profile.themeConfig);
         }
-    }, [profile.themeConfig]);
+    } catch (e) {
+        console.error("Failed to parse theme", e);
+    }
 
-    // CSS Variables
-    const themeStyles = {
-        '--theme-bg': theme.colors.background,
-        '--theme-container-bg': theme.colors.containerBg,
-        '--theme-primary': theme.colors.primary,
-        '--theme-text': theme.colors.text,
-        '--theme-secondary': theme.colors.secondaryText || '#888',
-        '--theme-accent': theme.colors.accent,
-        '--theme-border': theme.colors.border,
-        '--theme-font-heading': theme.fonts.heading,
-        '--theme-font-body': theme.fonts.body,
-        '--theme-radius': theme.layout.borderRadius,
-        '--theme-max-width': theme.layout.maxWidth || '1200px',
-    } as React.CSSProperties;
-
-    const heroImage = profile.avatarUrl || "/graphics/profile/main.jpg";
+    // Dynamic Styles - Use avatarUrl instead of imageUrl
+    const bgImage = profile.handle.toLowerCase() === 'roblackey'
+        ? "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=2070&auto=format&fit=crop" // High quality studio/musician vibe
+        : (profile.avatarUrl || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=2070&auto=format&fit=crop");
 
     return (
-        <div
-            className="min-h-screen text-[var(--theme-text)] font-[var(--theme-font-body)] bg-[var(--theme-bg)] selection:bg-[var(--theme-accent)] selection:text-white"
-            style={themeStyles}
-        >
-            {/* HERO SECTION */}
-            <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
-                {/* Background Image/Video */}
-                <div className="absolute inset-0 z-0">
-                    <img
-                        src={heroImage}
-                        alt="Hero Background"
-                        className="w-full h-full object-cover"
-                        style={{ filter: `blur(${theme.hero.blur}px)` }}
-                    />
+        <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-white/20 overflow-x-hidden">
+
+            {/* --- HERO SECTION --- */}
+            <header className="relative h-screen flex items-center justify-center overflow-hidden">
+                {/* Background Image Parallax */}
+                <motion.div
+                    style={{ y: y1 }}
+                    className="absolute inset-0 z-0"
+                >
                     <div
-                        className="absolute inset-0 bg-black"
-                        style={{ opacity: theme.hero.overlayOpacity }}
+                        className="absolute inset-0 bg-cover bg-center"
+                        style={{ backgroundImage: `url(${bgImage})` }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--theme-bg)] to-transparent opacity-80" />
-                </div>
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-[#050505]" />
+                </motion.div>
 
-                {/* Hero Content */}
-                <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
-                    >
-                        <h2 className="text-[var(--theme-accent)] text-lg md:text-xl font-bold tracking-[0.2em] uppercase mb-4">
-                            {profile.musicianType || "Artist"}
-                        </h2>
-                        <h1
-                            className="text-5xl md:text-8xl font-bold mb-6 text-white tracking-tighter"
-                            style={{ fontFamily: 'var(--theme-font-heading)' }}
-                        >
-                            {profile.user.name || profile.handle}
-                        </h1>
-                        <p className="text-xl md:text-2xl text-[var(--theme-secondary)] max-w-2xl mx-auto mb-10 leading-relaxed">
-                            {profile.bio || "Creating immersive soundscapes."}
-                        </p>
-
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                            <button className="px-8 py-4 bg-[var(--theme-primary)] text-black font-bold text-sm tracking-widest uppercase hover:bg-white transition-colors flex items-center gap-2">
-                                <PlayCircle size={20} /> Latest Release
-                            </button>
-                            <button className="px-8 py-4 border border-[var(--theme-secondary)] text-[var(--theme-primary)] font-bold text-sm tracking-widest uppercase hover:bg-white/5 transition-colors">
-                                Contact Management
-                            </button>
-                        </div>
-                    </motion.div>
-                </div>
+                {/* Content */}
+                <motion.div
+                    style={{ opacity: opacityHero }}
+                    className="relative z-10 text-center max-w-4xl px-6"
+                >
+                    <div className="inline-block mb-4 px-4 py-1.5 rounded-full border border-white/20 bg-white/5 backdrop-blur-md text-xs font-bold tracking-[0.2em] uppercase">
+                        {/* Use musicianType instead of role */}
+                        {profile.musicianType || "Artist & Producer"}
+                    </div>
+                    <h1 className="text-6xl md:text-9xl font-black tracking-tighter mb-6 text-white mix-blend-overlay">
+                        {/* Use profile.user.name instead of displayName */}
+                        {(profile.user?.name || profile.handle).toUpperCase()}
+                    </h1>
+                    <p className="text-xl md:text-2xl text-white/80 font-light max-w-2xl mx-auto leading-relaxed mix-blend-plus-lighter">
+                        {profile.bio || "Sonic Architect. Visual Designer. Universal Creator."}
+                    </p>
+                </motion.div>
 
                 {/* Scroll Indicator */}
-                {theme.hero.showScrollIndicator && (
-                    <motion.div
-                        className="absolute bottom-10 left-1/2 -translate-x-1/2 text-[var(--theme-secondary)]"
-                        animate={{ y: [0, 10, 0] }}
-                        transition={{ repeat: Infinity, duration: 1.5 }}
-                    >
-                        <ChevronDown size={32} />
-                    </motion.div>
-                )}
-            </section>
+                <motion.div
+                    animate={{ y: [0, 10, 0] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className="absolute bottom-12 left-1/2 -translate-x-1/2 text-white/50"
+                >
+                    <ArrowDown size={24} />
+                </motion.div>
+            </header>
 
-            {/* STICKY NAVIGATION */}
-            <nav
-                className={`sticky top-0 z-50 backdrop-blur-md border-b border-[var(--theme-border)/10] transition-all duration-300 ${scrolled ? 'bg-[var(--theme-bg)]/90 py-4 shadow-lg' : 'bg-transparent py-6'}`}
-            >
-                <div className="max-w-[var(--theme-max-width)] mx-auto px-6 flex justify-between items-center">
-                    <span className="text-xl font-bold tracking-tight font-[var(--theme-font-heading)]">
-                        {profile.user.name || "VYNL"}
-                    </span>
 
-                    <div className="hidden md:flex gap-8 text-sm font-medium tracking-wide text-[var(--theme-secondary)]">
-                        <a href="#music" className="hover:text-[var(--theme-primary)] transition-colors">MUSIC</a>
-                        <a href="#about" className="hover:text-[var(--theme-primary)] transition-colors">ABOUT</a>
-                        <a href="#contact" className="hover:text-[var(--theme-primary)] transition-colors">CONTACT</a>
-                    </div>
+            {/* --- "UNCAGED" CONTENT FLOW --- */}
+            <div className="relative z-10 px-6 py-24 md:py-32 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24">
 
-                    {sessionUser && (
-                        <div className="flex items-center gap-4">
-                            <button onClick={() => signOut()} className="text-xs text-[var(--theme-secondary)] hover:text-white flex items-center gap-1">
-                                <LogOut size={14} /> SIGN OUT
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </nav>
-
-            {/* MAIN CONTENT */}
-            <main className="max-w-[var(--theme-max-width)] mx-auto px-6 py-20 space-y-32">
-
-                {/* MUSIC SECTION */}
-                <section id="music" className="scroll-mt-32">
-                    <div className="flex flex-col md:flex-row gap-12 items-start">
-                        <div className="md:w-1/3">
-                            <div className="flex items-center gap-3 mb-4 text-[var(--theme-accent)]">
-                                <Music size={24} />
-                                <h3 className="text-sm font-bold tracking-widest uppercase">Discography</h3>
-                            </div>
-                            <h2 className="text-4xl font-bold font-[var(--theme-font-heading)] mb-6">Latest Sounds</h2>
-                            <p className="text-[var(--theme-secondary)] leading-relaxed">
-                                Stream the full collection of tracks, remixes, and exclusive cuts directly from the source. High-fidelity audio powered by the VYNL Engine.
-                            </p>
-                        </div>
-                        <div className="md:w-2/3 w-full bg-[var(--theme-container-bg)] p-1 rounded-[var(--theme-radius)] border border-[var(--theme-border)]">
-                            <DiscographyPlayer albums={discographyData.albums} />
-                        </div>
-                    </div>
-                </section>
-
-                {/* ABOUT SECTION */}
-                <section id="about" className="scroll-mt-32">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
-                        <div className="relative aspect-[3/4] overflow-hidden rounded-[var(--theme-radius)]">
-                            <img
-                                src={profile.avatarUrl || "/graphics/profile/main.jpg"}
-                                alt="Artist Portrait"
-                                className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700"
-                            />
-                        </div>
-                        <div className="flex flex-col justify-center">
-                            <div className="flex items-center gap-3 mb-4 text-[var(--theme-accent)]">
-                                <Info size={24} />
-                                <h3 className="text-sm font-bold tracking-widest uppercase">The Story</h3>
-                            </div>
-                            <h2 className="text-4xl font-bold font-[var(--theme-font-heading)] mb-8">
-                                Behind the Music
+                {/* Left Column: Bio & Core Info (Glassmorphism) */}
+                <div className="lg:col-span-5 space-y-12">
+                    <div className="sticky top-12">
+                        <div className="p-8 md:p-12 rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-2xl">
+                            <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
+                                <Mic2 className="text-cyan-400" size={28} /> About
                             </h2>
-                            <div className="space-y-6 text-lg text-[var(--theme-secondary)] leading-loose">
-                                <p>{profile.bio || "No biography available."}</p>
+                            <p className="text-neutral-400 leading-loose text-lg mb-8">
+                                With over a decade of experience in both analog and digital domains, I bridge the gap between vintage warmth and modern precision.
+                                My work spans sound design, live performance systems, and visual identity.
+                            </p>
 
-                                {interests.music && (
-                                    <div className="pt-4">
-                                        <h4 className="text-white font-bold mb-2 text-sm uppercase tracking-wide">Influences</h4>
-                                        <p className="text-base">{interests.music}</p>
-                                    </div>
-                                )}
+                            <div className="space-y-4">
+                                <SkillBar label="Music Production" level={95} color="bg-cyan-500" />
+                                <SkillBar label="Live Sound Engineering" level={90} color="bg-purple-500" />
+                                <SkillBar label="Visual Design" level={85} color="bg-pink-500" />
+                                <SkillBar label="Software Development" level={80} color="bg-green-500" />
                             </div>
 
-                            {gear.length > 0 && (
-                                <div className="mt-12 pt-8 border-t border-[var(--theme-border)]">
-                                    <h4 className="text-white font-bold mb-4 text-sm uppercase tracking-wide">Studio Gear</h4>
-                                    <div className="flex flex-wrap gap-2">
-                                        {gear.map((item: string, idx: number) => (
-                                            <span
-                                                key={idx}
-                                                className="px-3 py-1 bg-[var(--theme-container-bg)] border border-[var(--theme-border)] text-[11px] uppercase tracking-wider text-[var(--theme-secondary)]"
-                                            >
-                                                {item}
-                                            </span>
-                                        ))}
-                                    </div>
+                            <div className="mt-8 flex gap-4 pt-8 border-t border-white/5">
+                                <SocialBtn icon={<Instagram size={20} />} href="#" />
+                                <SocialBtn icon={<Twitter size={20} />} href="#" />
+                                <SocialBtn icon={<Globe size={20} />} href="#" />
+                                <SocialBtn icon={<Mail size={20} />} href="#" />
+                            </div>
+
+                            {sessionUser && (
+                                <div className="mt-8 pt-8 border-t border-white/5">
+                                    <button
+                                        onClick={() => signOut()}
+                                        className="flex items-center gap-2 text-red-500 hover:text-red-400 text-sm font-bold uppercase tracking-widest transition-colors"
+                                    >
+                                        <LogOut size={16} /> Sign Out
+                                    </button>
                                 </div>
                             )}
                         </div>
                     </div>
-                </section>
+                </div>
 
-                {/* CONTACT SECTION */}
-                <section id="contact" className="scroll-mt-32 pb-20">
-                    <div className="bg-[var(--theme-container-bg)] p-10 md:p-20 rounded-[var(--theme-radius)] text-center border border-[var(--theme-border)] relative overflow-hidden">
-                        <div className="relative z-10">
-                            <div className="flex justify-center mb-6 text-[var(--theme-accent)]">
-                                <Mail size={32} />
+                {/* Right Column: Dynamic Content (Discography, Gallery, Etc) */}
+                <div className="lg:col-span-7 space-y-24">
+
+                    {/* Latest Release */}
+                    <section>
+                        <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-8">LATEST RELEASE</h3>
+                        <div className="group relative aspect-video rounded-3xl overflow-hidden bg-neutral-900 border border-white/10 shadow-2xl">
+                            <img
+                                src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=2070&auto=format&fit=crop"
+                                alt="Release Cover"
+                                className="object-cover w-full h-full opacity-60 group-hover:opacity-40 transition-opacity duration-500 transform group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12 bg-gradient-to-t from-black/90 to-transparent">
+                                <h2 className="text-4xl font-bold mb-2">Neon Horizons</h2>
+                                <div className="flex items-center gap-4">
+                                    <button className="flex items-center gap-2 bg-white text-black px-6 py-3 rounded-full font-bold hover:scale-105 transition-transform">
+                                        <Play size={18} fill="currentColor" /> STREAM
+                                    </button>
+                                    <button className="p-3 rounded-full border border-white/20 hover:bg-white/10 transition-colors">
+                                        <Share2 size={18} />
+                                    </button>
+                                </div>
                             </div>
-                            <h2 className="text-4xl md:text-5xl font-bold font-[var(--theme-font-heading)] mb-6">Let's Create Together</h2>
-                            <p className="text-xl text-[var(--theme-secondary)] max-w-2xl mx-auto mb-10">
-                                Available for bookings, collaborations, and press inquiries.
-                            </p>
-                            <a
-                                href="mailto:booking@vynl.pro"
-                                className="inline-block px-10 py-5 bg-[var(--theme-primary)] text-black font-bold text-sm tracking-widest uppercase hover:bg-white transition-colors"
-                            >
-                                Get in Touch
-                            </a>
                         </div>
+                    </section>
 
-                        {/* Decorative Background */}
-                        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-                            <div className="absolute top-[-50%] left-[-20%] w-[80%] h-[80%] bg-[var(--theme-primary)] rounded-full blur-[150px]" />
+                    {/* Services / "Band Creation" Teaser */}
+                    <section>
+                        <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-8">SERVICES & GEAR</h3>
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <ServiceCard icon={<Disc />} title="Mixing & Mastering" desc="Hybrid analog/digital workflow." />
+                            <ServiceCard icon={<Cpu />} title="System Design" desc="Mainstage & Ableton Live rigs." />
+                            <ServiceCard icon={<Layers />} title="Visuals" desc="Custom Quartz Composer & Resolume." />
+                            <ServiceCard icon={<Zap />} title="Consulting" desc="Studio build-outs and acoustic analysis." />
                         </div>
-                    </div>
-                </section>
+                    </section>
 
-            </main>
+                    {/* Footer / Copyright */}
+                    <footer className="pt-12 border-t border-white/5 text-neutral-600 text-sm">
+                        <p>© 2026 {profile.user?.name || profile.handle}. Produced by Rocket Tree Labs.</p>
+                    </footer>
 
-            {/* FOOTER */}
-            <footer className="border-t border-[var(--theme-border)] py-12 text-center">
-                <p className="text-[var(--theme-secondary)] text-sm tracking-widest uppercase">
-                    © 2026 {profile.user.name || "VYNL"}. Powered by VYNL.PRO
-                </p>
-            </footer>
+                </div>
+
+            </div>
+
+        </div>
+    );
+}
+
+function SkillBar({ label, level, color }: { label: string, level: number, color: string }) {
+    return (
+        <div>
+            <div className="flex justify-between text-xs font-bold uppercase tracking-wider mb-1.5 opacity-80">
+                <span>{label}</span>
+                <span>{level}%</span>
+            </div>
+            <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                <motion.div
+                    initial={{ width: 0 }}
+                    whileInView={{ width: `${level}%` }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    className={`h-full ${color}`}
+                />
+            </div>
+        </div>
+    );
+}
+
+function SocialBtn({ icon, href }: { icon: React.ReactNode, href: string }) {
+    return (
+        <a href={href} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80 hover:text-white">
+            {icon}
+        </a>
+    );
+}
+
+function ServiceCard({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
+    return (
+        <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-colors group">
+            <div className="text-neutral-500 group-hover:text-white mb-4 transition-colors">{icon}</div>
+            <h4 className="font-bold mb-1">{title}</h4>
+            <p className="text-sm text-neutral-500">{desc}</p>
         </div>
     );
 }

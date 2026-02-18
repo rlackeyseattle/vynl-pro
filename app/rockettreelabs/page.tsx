@@ -1,69 +1,114 @@
-﻿
+﻿"use client";
+
 import React from 'react';
-import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { Cpu, Speaker, Mic2, Zap, Settings, Truck, Box, Layers, Radio } from 'lucide-react';
 
-export default function RocketTreeLabsPage() {
+export default function RocketTreeLabs() {
     return (
-        <div className="min-h-screen bg-[#050505] text-white font-mono selection:bg-green-500/30">
-            {/* Nav */}
-            <nav className="fixed top-0 w-full z-50 p-6 flex justify-between items-center bg-black/80 backdrop-blur-md border-b border-green-900/20">
-                <Link href="/" className="text-xl font-bold tracking-tighter hover:text-green-500 transition-colors">VYNL.PRO</Link>
-                <div className="text-sm tracking-widest uppercase text-green-500">Rocket Tree Labs</div>
-            </nav>
+        <div className="min-h-screen bg-[#050505] text-white font-mono relative overflow-hidden selection:bg-cyan-500/30">
+            {/* Background Grid */}
+            <div className="absolute inset-0 pointer-events-none"
+                style={{
+                    backgroundImage: 'linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px)',
+                    backgroundSize: '40px 40px'
+                }}
+            />
 
-            {/* Hero */}
-            <main className="pt-32 pb-20 px-6 max-w-6xl mx-auto">
-                <div className="border border-green-900/30 bg-green-900/5 rounded-lg p-12 md:p-24 text-center space-y-8 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-green-500 to-transparent opacity-50" />
+            <div className="max-w-7xl mx-auto px-6 py-24 relative z-10">
 
-                    <h1 className="text-4xl md:text-7xl font-bold tracking-tighter text-green-50">
-                        ROCKET TREE LABS
-                    </h1>
-                    <p className="text-xl text-green-400/80 max-w-2xl mx-auto">
-                        High-Performance Audio Software & Utilities
+                {/* Header */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-24 border-b border-cyan-900/30 pb-12"
+                >
+                    <div className="flex items-center gap-4 mb-4 text-cyan-500">
+                        <Cpu size={32} />
+                        <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">Rocket Tree Labs</h1>
+                    </div>
+                    <p className="text-xl text-neutral-400 max-w-2xl leading-relaxed">
+                        Creative solutions for all musicians. From independent hobbyists to pro touring rigs.
+                        Designing the future of zero-latency performance.
                     </p>
+                </motion.div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-12">
-                        <div className="p-6 border border-green-900/30 bg-black/40 rounded hover:bg-green-900/10 transition-colors cursor-default">
-                            <h3 className="text-green-400 text-lg mb-2">&gt; DSP_Core</h3>
-                            <p className="text-sm text-gray-500">Real-time audio processing modules.</p>
+                {/* Hero Product: Universal Drive */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    className="mb-32 grid md:grid-cols-2 gap-12 items-center"
+                >
+                    <div className="order-2 md:order-1">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/30 border border-cyan-500/30 text-cyan-400 text-xs font-bold mb-6">
+                            <Zap size={12} /> PROTOTYPE PHASE
                         </div>
-                        <div className="p-6 border border-green-900/30 bg-black/40 rounded hover:bg-green-900/10 transition-colors cursor-default">
-                            <h3 className="text-green-400 text-lg mb-2">&gt; Latency_Zero</h3>
-                            <p className="text-sm text-gray-500">Optimized low-level drivers.</p>
-                        </div>
-                        <div className="p-6 border border-green-900/30 bg-black/40 rounded hover:bg-green-900/10 transition-colors cursor-default">
-                            <h3 className="text-green-400 text-lg mb-2">&gt; Cloud_Sync</h3>
-                            <p className="text-sm text-gray-500">Seamless setlist management.</p>
+                        <h2 className="text-4xl font-bold mb-6 text-white">The Universal Audio Drive</h2>
+                        <ul className="space-y-4 mb-8 text-neutral-400">
+                            <li className="flex items-start gap-3">
+                                <CheckIcon />
+                                <span><strong>Zero Latency:</strong> Real-time processing for live performance.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <CheckIcon />
+                                <span><strong>Universal Compatibility:</strong> Runs off a single USB stick. Plug & Play.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <CheckIcon />
+                                <span><strong>OS Agnostic:</strong> Bootable environment optimized purely for audio.</span>
+                            </li>
+                        </ul>
+                        <button className="px-8 py-4 bg-cyan-600 hover:bg-cyan-500 text-black font-bold uppercase tracking-widest transition-colors clip-path-slant">
+                            Join Waitlist
+                        </button>
+                    </div>
+                    <div className="order-1 md:order-2 relative aspect-square bg-neutral-900/50 rounded-xl border border-white/5 flex items-center justify-center p-12 group">
+                        <div className="absolute inset-0 bg-cyan-500/5 group-hover:bg-cyan-500/10 transition-colors duration-500" />
+
+                        {/* Mockup Graphic */}
+                        <div className="relative w-48 h-80 bg-neutral-800 rounded-lg border-2 border-neutral-700 shadow-2xl skew-y-3 transform transition-transform group-hover:-skew-y-0 duration-500 flex flex-col items-center justify-center gap-4">
+                            <div className="w-12 h-16 border-2 border-cyan-500 rounded bg-black/50" />
+                            <div className="h-2 w-24 bg-neutral-700 rounded-full animate-pulse" />
+                            <div className="text-[10px] text-cyan-500 font-mono text-center px-4">BOOTING AUDIO KERNEL...</div>
                         </div>
                     </div>
+                </motion.div>
+
+                {/* Services Grid */}
+                <div className="grid md:grid-cols-3 gap-8">
+                    <ServiceCard
+                        icon={<Speaker size={32} />}
+                        title="Custom Studio Design"
+                        desc="Acoustic treatment and architectural planning for rooms that translate perfectly."
+                    />
+                    <ServiceCard
+                        icon={<Box size={32} />}
+                        title="Live Sound Rigs"
+                        desc="Turnkey touring solutions. IEM racks, playback systems, and redundant networking."
+                    />
+                    <ServiceCard
+                        icon={<Settings size={32} />}
+                        title="System Integration"
+                        desc="Optimizing existing workflows. Cable management, patchbays, and digital clocking."
+                    />
                 </div>
 
-                <div className="mt-20 space-y-8">
-                    <h2 className="text-2xl font-bold text-green-500 border-b border-green-900/30 pb-4">Current Initiatives</h2>
-                    <ul className="space-y-4 text-gray-400">
-                        <li className="flex items-start gap-4">
-                            <span className="text-green-500 mt-1">::</span>
-                            <div>
-                                <strong className="text-white block">VYNL Stage Integrations</strong>
-                                <p className="text-sm mt-1">Developing custom plugins for live performance stability and feature expansion.</p>
-                            </div>
-                        </li>
-                        <li className="flex items-start gap-4">
-                            <span className="text-green-500 mt-1">::</span>
-                            <div>
-                                <strong className="text-white block">Audio Analysis Tools</strong>
-                                <p className="text-sm mt-1">Automated BPM detection and key analysis algorithms.</p>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-
-            </main>
-
-            <footer className="py-8 text-center text-xs text-green-900/50">
-                <p>SYSTEM_READY // ROCKET_TREE_LABS v2.0.26</p>
-            </footer>
+            </div>
         </div>
     );
+}
+
+function ServiceCard({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
+    return (
+        <div className="p-8 border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-colors rounded-xl group">
+            <div className="mb-6 text-neutral-500 group-hover:text-cyan-400 transition-colors">{icon}</div>
+            <h3 className="text-xl font-bold mb-3">{title}</h3>
+            <p className="text-neutral-400 text-sm leading-relaxed">{desc}</p>
+        </div>
+    );
+}
+
+function CheckIcon() {
+    return <div className="w-5 h-5 rounded bg-cyan-900/30 flex items-center justify-center text-cyan-400 mt-0.5"><div className="w-2 h-2 bg-current rounded-full" /></div>
 }

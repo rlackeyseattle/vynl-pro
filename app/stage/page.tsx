@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import {
     Music, ListMusic, ChevronRight, ChevronLeft, ChevronDown,
     Search, Pause, Layout, Monitor,
     ChevronsDown, Plus,
     Hash, AlignLeft, AlignCenter, AlignRight,
-    PlusCircle, X, Check, Radio
+    PlusCircle, X, Check, Radio, Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './stage.css';
@@ -22,19 +21,6 @@ interface Song {
     lyrics: string;
     chords?: string;
     genre?: string;
-}
-
-interface SetlistSummary {
-    id: string;
-    name: string;
-    description: string;
-    song_count: number;
-}
-
-interface Setlist {
-    id: string;
-    name: string;
-    songs: Song[];
 }
 
 // === MUSIC THEORY ENGINE ===
@@ -107,7 +93,6 @@ function chordToNashville(chord: string, keyRoot: string): string {
     return degree;
 }
 
-// --- SECTION COLORS ---
 const SECTION_COLORS: Record<string, string> = {
     'intro': '#9d50bb', 'verse': '#00d2ff', 'chorus': '#ffbf47', 'bridge': '#ff6b6b',
     'outro': '#9d50bb', 'solo': '#50bb6e', 'pre-chorus': '#ff9f43',
@@ -128,46 +113,60 @@ function isChordLine(line: string): boolean {
     return chordCount >= 1 && stripped.length < 5;
 }
 
-type SortField = 'name' | 'artist' | 'key' | 'genre' | 'bpm';
-type MainTab = 'chart' | 'library';
+// --- DEMO DATA ---
+const DEMO_LIBRARY: Song[] = [
+    {
+        id: '1', name: 'Bohemian Rhapsody', artist: 'Queen', key: 'Bb', bpm: 72,
+        lyrics: `[Intro]
+Is this the real life?
+Is this just fantasy?
+Caught in a landslide
+No escape from reality
 
-// --- APP COMPONENT ---
-export default function StagePage() {
-    const [mainTab, setMainTab] = useState<MainTab>('chart');
-    const [library, setLibrary] = useState<Song[]>([]);
-    const [setlists, setSetlists] = useState<SetlistSummary[]>([]);
-    const [expandedSetlists, setExpandedSetlists] = useState<Record<string, Setlist>>({});
-    const [selectedSetlist, setSelectedSetlist] = useState<Setlist | null>(null);
-    const [currentSong, setCurrentSong] = useState<Song | null>(null);
-    const [searchQuery, setSearchQuery] = useState('');
+[Verse 1]
+[Bb]Mama, just [Gm]killed a man
+Put a [Cm]gun against his head
+Pulled my [cm7]trigger, now he's [F]dead`
+    },
+    {
+        id: '2', name: 'Hotel California', artist: 'Eagles', key: 'Bm', bpm: 75,
+        lyrics: `[Intro]
+[Bm] [F#] [A] [E] [G] [D] [Em] [F#]
+
+[Verse 1]
+[Bm]On a dark desert highway, [F#]cool wind in my hair
+[A]Warm smell of colitas, [E]rising up through the air
+[G]Up ahead in the distance, [D]I saw a shimmering light
+[Em]My head grew heavy and my sight grew dim, [F#]I had to stop for the night`
+    },
+    {
+        id: '3', name: 'Mr. Brightside', artist: 'The Killers', key: 'Db', bpm: 148,
+        lyrics: `[Verse 1]
+[C#]Coming out of my cage
+And I've been doing just fine
+Gotta gotta be down
+Because I want it all`
+    }
+];
+
+export default function DemoStagePage() {
+    const [currentSong, setCurrentSong] = useState<Song | null>(DEMO_LIBRARY[0]);
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [fontSize, setFontSize] = useState(1.6);
-    const [isPresenterMode, setPresenterMode] = useState(false);
-    const [isBroadcasting, setIsBroadcasting] = useState(false);
 
     // Auto-scroll
     const [isScrolling, setIsScrolling] = useState(false);
     const [scrollSpeed, setScrollSpeed] = useState(30);
-    const scrollSpeedRef = useRef(30);
     const scrollRef = useRef<HTMLDivElement>(null);
     const animFrameRef = useRef<number>(0);
     const lastTimeRef = useRef<number>(0);
     const scrollAccumRef = useRef(0);
 
-    // Alignment
-    const [alignment, setAlignment] = useState<'left' | 'center' | 'right'>('left');
-
-    // Transpose & Capo
+    // Theory
     const [transpose, setTranspose] = useState(0);
     const [capo, setCapo] = useState(0);
     const [useFlats, setUseFlats] = useState(false);
     const [nashvilleMode, setNashvilleMode] = useState(false);
-
-    // Library sorting & search
-    const [sortField, setSortField] = useState<SortField>('name');
-    const [sortAsc, setSortAsc] = useState(true);
-    const [libSearch, setLibSearch] = useState('');
-
     const totalShift = transpose - capo;
 
     const effectiveKey = (() => {
@@ -177,125 +176,31 @@ export default function StagePage() {
         return transposeNote(parsed.root, totalShift, useFlats);
     })();
 
-    useEffect(() => {
-        setTranspose(0);
-        setCapo(0);
-        setIsScrolling(false);
-        if (scrollRef.current) scrollRef.current.scrollTop = 0;
-    }, [currentSong?.id]);
+    // Scroll Logic (Simplified for demo)
+    const toggleScroll = () => setIsScrolling(!isScrolling);
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [songsRes, listsRes] = await Promise.all([
-                    axios.get('/api/songs'),
-                    axios.get('/api/setlists')
-                ]);
-                setLibrary(songsRes.data);
-                setSetlists(listsRes.data);
-                if (songsRes.data.length > 0) setCurrentSong(songsRes.data[0]);
-            } catch (err) {
-                console.error("Failed to fetch VYNL data", err);
+        let raf: number;
+        const loop = (ts: number) => {
+            if (!isScrolling || !scrollRef.current) return;
+            if (lastTimeRef.current === 0) lastTimeRef.current = ts;
+            const delta = (ts - lastTimeRef.current) / 1000;
+            lastTimeRef.current = ts;
+            scrollAccumRef.current += scrollSpeed * delta;
+            if (scrollAccumRef.current >= 1) {
+                scrollRef.current.scrollTop += Math.floor(scrollAccumRef.current);
+                scrollAccumRef.current %= 1;
             }
+            raf = requestAnimationFrame(loop);
         };
-        fetchData();
-    }, []);
-
-    // Scroll engine
-    useEffect(() => { scrollSpeedRef.current = scrollSpeed; }, [scrollSpeed]);
-
-    const scrollLoopFn = useRef<((ts: number) => void) | undefined>(undefined);
-    scrollLoopFn.current = (timestamp: number) => {
-        if (!scrollRef.current) return;
-        if (lastTimeRef.current === 0) lastTimeRef.current = timestamp;
-        const delta = (timestamp - lastTimeRef.current) / 1000;
-        lastTimeRef.current = timestamp;
-        scrollAccumRef.current += scrollSpeedRef.current * delta;
-        if (scrollAccumRef.current >= 1) {
-            const px = Math.floor(scrollAccumRef.current);
-            scrollRef.current.scrollTop += px;
-            scrollAccumRef.current -= px;
-        }
-        const el = scrollRef.current;
-        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
-            setIsScrolling(false);
-            return;
-        }
-        animFrameRef.current = requestAnimationFrame((ts) => scrollLoopFn.current?.(ts));
-    };
-
-    const toggleScroll = () => {
         if (isScrolling) {
-            cancelAnimationFrame(animFrameRef.current);
-            setIsScrolling(false);
-        } else {
-            setIsScrolling(true);
             lastTimeRef.current = 0;
-            scrollAccumRef.current = 0;
-            animFrameRef.current = requestAnimationFrame((ts) => scrollLoopFn.current?.(ts));
+            raf = requestAnimationFrame(loop);
         }
-    };
+        return () => cancelAnimationFrame(raf);
+    }, [isScrolling, scrollSpeed]);
 
-    useEffect(() => () => cancelAnimationFrame(animFrameRef.current), []);
-
-    // Setlist operations
-    const toggleSetlistExpand = async (id: string) => {
-        if (expandedSetlists[id]) {
-            const copy = { ...expandedSetlists };
-            delete copy[id];
-            setExpandedSetlists(copy);
-        } else {
-            try {
-                const res = await axios.get(`/api/setlists/${id}`);
-                setExpandedSetlists({ ...expandedSetlists, [id]: res.data });
-            } catch (err) { console.error("Failed to load setlist", err); }
-        }
-    };
-
-    const loadSetlistForPlayback = async (id: string) => {
-        try {
-            const res = await axios.get(`/api/setlists/${id}`);
-            setSelectedSetlist(res.data);
-            if (res.data.songs.length > 0) setCurrentSong(res.data.songs[0]);
-            setMainTab('chart');
-        } catch (err) { console.error("Load Setlist Failed", err); }
-    };
-
-    const openSongFromLibrary = (song: Song) => {
-        setCurrentSong(song);
-        setMainTab('chart');
-    };
-
-    const handleNext = () => {
-        if (!selectedSetlist || !currentSong) return;
-        const idx = selectedSetlist.songs.findIndex(s => s.id === currentSong.id);
-        if (idx < selectedSetlist.songs.length - 1) setCurrentSong(selectedSetlist.songs[idx + 1]);
-    };
-
-    const handlePrev = () => {
-        if (!selectedSetlist || !currentSong) return;
-        const idx = selectedSetlist.songs.findIndex(s => s.id === currentSong.id);
-        if (idx > 0) setCurrentSong(selectedSetlist.songs[idx - 1]);
-    };
-
-    const filteredLibrary = library
-        .filter(s =>
-            s.name.toLowerCase().includes(libSearch.toLowerCase()) ||
-            s.artist?.toLowerCase().includes(libSearch.toLowerCase())
-        )
-        .sort((a, b) => {
-            const av = (a[sortField] ?? '') as any;
-            const bv = (b[sortField] ?? '') as any;
-            if (typeof av === 'number' && typeof bv === 'number') return sortAsc ? av - bv : bv - av;
-            const cmp = String(av).localeCompare(String(bv), undefined, { sensitivity: 'base' });
-            return sortAsc ? cmp : -cmp;
-        });
-
-    const handleSort = (field: SortField) => {
-        if (sortField === field) setSortAsc(!sortAsc);
-        else { setSortField(field); setSortAsc(true); }
-    };
-
+    // Helpers
     const transformChord = (chord: string): string => {
         let c = chord;
         if (totalShift !== 0) c = transposeChord(c, totalShift, useFlats);
@@ -309,51 +214,26 @@ export default function StagePage() {
         const elements: React.ReactElement[] = [];
         let currentColor = SECTION_COLORS['verse'];
         let i = 0;
+
         while (i < lines.length) {
             const line = lines[i];
             const trimmed = line.trim();
             if (!trimmed) { elements.push(<div key={i} className="chart-spacer" />); i++; continue; }
 
-            const sectionMatch = trimmed.match(/^\[([^\]]+)\]$/);
+            // Section Headers
+            const sectionMatch = trimmed.match(/^\[([^\]]+)\]$/) || trimmed.match(/^(Verse|Chorus|Bridge|Outro|Intro|Solo|Pre-Chorus|Interlude|Hook)\s*\d*:?\s*$/i);
             if (sectionMatch) {
-                const st = getSectionType(trimmed);
+                let st = getSectionType(trimmed);
                 if (st) currentColor = SECTION_COLORS[st];
                 elements.push(
                     <div key={i} className="chart-section" style={{ '--section-color': currentColor } as React.CSSProperties}>
-                        <span className="section-label-text">{sectionMatch[1]}</span>
+                        <span className="section-label-text">{trimmed.replace(/[\[\]:]/g, '')}</span>
                     </div>
                 );
                 i++; continue;
             }
 
-            const plainMatch = trimmed.match(/^(Verse|Chorus|Bridge|Outro|Intro|Solo|Pre-Chorus|Interlude|Hook)\s*\d*:?\s*$/i);
-            if (plainMatch) {
-                const st = getSectionType(trimmed);
-                if (st) currentColor = SECTION_COLORS[st];
-                elements.push(
-                    <div key={i} className="chart-section" style={{ '--section-color': currentColor } as React.CSSProperties}>
-                        <span className="section-label-text">{trimmed.replace(/:$/, '')}</span>
-                    </div>
-                );
-                i++; continue;
-            }
-
-            if (isChordLine(line) && i + 1 < lines.length && !isChordLine(lines[i + 1]) && lines[i + 1].trim()) {
-                const segs = line.split(/(\[.*?\])/g);
-                elements.push(
-                    <div key={i} className="chart-paired-line">
-                        <div className="chord-row">
-                            {segs.map((seg, j) => seg.startsWith('[') && seg.endsWith(']')
-                                ? <span key={j} className="chord-tag">{transformChord(seg.slice(1, -1))}</span>
-                                : <span key={j} className="chord-space">{seg}</span>
-                            )}
-                        </div>
-                        <div className="lyric-row">{lines[i + 1]}</div>
-                    </div>
-                );
-                i += 2; continue;
-            }
-
+            // Lyric/Chord Lines
             if (line.includes('[')) {
                 const segs = line.split(/(\[.*?\])/g);
                 elements.push(
@@ -381,137 +261,47 @@ export default function StagePage() {
         return transposeNote(parsed.root, totalShift, useFlats) + parsed.quality;
     })();
 
-    // Broadcast Sync
-    useEffect(() => {
-        if (!isBroadcasting) return;
-
-        const syncInterval = setInterval(async () => {
-            try {
-                // Get current scroll percentage
-                let scrollPct = 0;
-                if (scrollRef.current) {
-                    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-                    scrollPct = scrollTop / (scrollHeight - clientHeight);
-                }
-
-                await axios.post('/api/stage/sync', {
-                    songId: currentSong?.id,
-                    songKey: currentSong?.key,
-                    transpose,
-                    capo,
-                    nashvilleMode,
-                    useFlats,
-                    scrollPct,
-                    isScrolling,
-                    scrollSpeed,
-                    alignment
-                });
-            } catch (err) {
-                console.error('Sync failed:', err);
-            }
-        }, 1000); // 1s sync
-
-        return () => clearInterval(syncInterval);
-    }, [isBroadcasting, currentSong, transpose, capo, nashvilleMode, useFlats, isScrolling, scrollSpeed, alignment]);
-
     return (
-        <div className={`stage-container ${isPresenterMode ? 'presenter-mode' : ''}`}>
-            {/* --- SIDEBAR --- */}
+        <div className="stage-container">
+            {/* Banner */}
+            <div className="absolute top-0 left-0 w-full bg-blue-600/20 text-blue-200 text-xs font-bold text-center py-1 z-50 border-b border-blue-500/30 flex items-center justify-center gap-2">
+                <Info size={14} /> DEMO MODE: Accessing Public Library. Sign in for personal charts.
+            </div>
+
+            {/* Sidebar */}
             <AnimatePresence>
-                {isSidebarOpen && !isPresenterMode && (
-                    <motion.aside initial={{ x: -320 }} animate={{ x: 0 }} exit={{ x: -320 }} className="sidebar">
+                {isSidebarOpen && (
+                    <motion.aside initial={{ x: -320 }} animate={{ x: 0 }} className="sidebar pt-8">
                         <div className="sidebar-header">
-                            <h2 className="gradient-text">VYNL STAGE</h2>
+                            <h2 className="gradient-text">VYNL STAGE // DEMO</h2>
                         </div>
-
-                        <div className="sidebar-search">
-                            <Search size={14} />
-                            <input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-                        </div>
-
                         <div className="sidebar-scroll">
-                            <div className="setlist-header-row">
-                                <span className="section-label">SETLISTS</span>
-                            </div>
-
-                            {setlists.map(list => (
-                                <div key={list.id} className="setlist-group">
-                                    <div className="setlist-header" onClick={() => toggleSetlistExpand(list.id)}>
-                                        <ChevronDown size={14} className={`chevron ${expandedSetlists[list.id] ? 'open' : ''}`} />
-                                        <span className="setlist-name">{list.name}</span>
-                                        <span className="badge">{list.song_count}</span>
-                                        <button className="play-btn" onClick={(e) => { e.stopPropagation(); loadSetlistForPlayback(list.id); }} title="Load Setlist">▶</button>
+                            <div className="section-label">POPULAR TRACKS</div>
+                            {DEMO_LIBRARY.map((song) => (
+                                <div key={song.id} className={`setlist-song-item ${currentSong?.id === song.id ? 'active' : ''}`}
+                                    onClick={() => setCurrentSong(song)}>
+                                    <div className="song-info">
+                                        <span className="name">{song.name}</span>
+                                        <span className="artist">{song.artist}</span>
                                     </div>
-
-                                    <AnimatePresence>
-                                        {expandedSetlists[list.id] && (
-                                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="setlist-songs">
-                                                {expandedSetlists[list.id].songs.map((song, idx) => (
-                                                    <div key={song.id} className={`setlist-song-item ${currentSong?.id === song.id ? 'active' : ''}`}
-                                                        onClick={() => { setCurrentSong(song); setSelectedSetlist(expandedSetlists[list.id]); setMainTab('chart'); }}>
-                                                        <span className="song-num">{idx + 1}</span>
-                                                        <div className="song-info">
-                                                            <span className="name">{song.name}</span>
-                                                            <span className="artist">{song.artist}</span>
-                                                        </div>
-                                                        <span className="song-key">{song.key || ''}</span>
-                                                    </div>
-                                                ))}
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
                                 </div>
                             ))}
-
-                            {searchQuery && (
-                                <>
-                                    <div className="section-label" style={{ marginTop: 24 }}>RESULTS</div>
-                                    {library
-                                        .filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.artist?.toLowerCase().includes(searchQuery.toLowerCase()))
-                                        .slice(0, 20)
-                                        .map(song => (
-                                            <div key={song.id} className={`setlist-song-item ${currentSong?.id === song.id ? 'active' : ''}`}
-                                                onClick={() => { setCurrentSong(song); setMainTab('chart'); }}>
-                                                <div className="song-info">
-                                                    <span className="name">{song.name}</span>
-                                                    <span className="artist">{song.artist}</span>
-                                                </div>
-                                                <span className="song-key">{song.key || ''}</span>
-                                            </div>
-                                        ))
-                                    }
-                                </>
-                            )}
-                        </div>
-
-                        <div className="sidebar-footer">
-                            <button onClick={() => setPresenterMode(true)} title="Presenter Mode">
-                                <Monitor size={16} /> PRESENT
-                            </button>
                         </div>
                     </motion.aside>
                 )}
             </AnimatePresence>
 
-            {/* --- MAIN CONTENT --- */}
-            <main className="main-content">
+            {/* Main Content */}
+            <main className="main-content pt-8">
                 <header className="main-header">
                     <div className="header-left">
-                        <button className="toggle-btn" onClick={() => setSidebarOpen(!isSidebarOpen)} title="Toggle Sidebar">
+                        <button className="toggle-btn" onClick={() => setSidebarOpen(!isSidebarOpen)}>
                             <Layout size={20} />
                         </button>
-
-                        <div className="main-tabs">
-                            <button className={mainTab === 'chart' ? 'active' : ''} onClick={() => setMainTab('chart')}>Chart</button>
-                            <button className={mainTab === 'library' ? 'active' : ''} onClick={() => setMainTab('library')}>
-                                <Music size={14} /> Library
-                            </button>
-                        </div>
-
-                        {mainTab === 'chart' && currentSong && (
+                        {currentSong && (
                             <div className="current-info">
                                 <h1>{currentSong.name}</h1>
-                                <p>{currentSong.artist} • {displayedKey} • {currentSong.bpm || '?'} BPM
+                                <p>{currentSong.artist} • {displayedKey} • {currentSong.bpm} BPM
                                     {capo > 0 && <span className="capo-badge"> • Capo {capo}</span>}
                                 </p>
                             </div>
@@ -521,135 +311,32 @@ export default function StagePage() {
                     <div className="header-actions">
                         <div className="tool-group">
                             <span className="tool-label">TRANS</span>
-                            <button onClick={() => setTranspose(t => t - 1)} title="Down">−</button>
+                            <button onClick={() => setTranspose(t => t - 1)}>−</button>
                             <span className={`tool-value ${transpose !== 0 ? 'active' : ''}`}>{transpose > 0 ? `+${transpose}` : transpose}</span>
-                            <button onClick={() => setTranspose(t => t + 1)} title="Up">+</button>
+                            <button onClick={() => setTranspose(t => t + 1)}>+</button>
                         </div>
-
-                        <div className="tool-group">
-                            <span className="tool-label">CAPO</span>
-                            <button onClick={() => setCapo(c => Math.max(0, c - 1))} title="Down">−</button>
-                            <span className={`tool-value ${capo > 0 ? 'active' : ''}`}>{capo}</span>
-                            <button onClick={() => setCapo(c => Math.min(12, c + 1))} title="Up">+</button>
-                        </div>
-
                         <button className={`mode-toggle ${nashvilleMode ? 'active' : ''}`} onClick={() => setNashvilleMode(!nashvilleMode)} title="Nashville"><Hash size={14} /> NSH</button>
-                        <button className={`mode-toggle ${useFlats ? 'active' : ''}`} onClick={() => setUseFlats(!useFlats)} title="Flats">♭</button>
-
-                        <button
-                            className={`mode-toggle broadcast-toggle ${isBroadcasting ? 'active animate-pulse' : ''}`}
-                            onClick={() => setIsBroadcasting(!isBroadcasting)}
-                            title={isBroadcasting ? 'Stop Broadcasting' : 'Start Broadcasting'}
-                        >
-                            <Radio size={14} /> {isBroadcasting ? 'LIVE' : 'SYNC'}
-                        </button>
 
                         <div className="scroll-controls">
-                            <button className={`scroll-toggle ${isScrolling ? 'active' : ''}`} onClick={toggleScroll} title={isScrolling ? 'Pause' : 'Scroll'}>
+                            <button className={`scroll-toggle ${isScrolling ? 'active' : ''}`} onClick={toggleScroll}>
                                 {isScrolling ? <Pause size={14} /> : <ChevronsDown size={14} />}
                             </button>
-                            <input type="range" min="1" max="120" value={scrollSpeed} onChange={e => setScrollSpeed(Number(e.target.value))} className="speed-slider" title={`Speed: ${scrollSpeed}`} />
-                            <span className="speed-label">{scrollSpeed}</span>
-                        </div>
-
-                        <div className="align-controls">
-                            <button className={alignment === 'left' ? 'active' : ''} onClick={() => setAlignment('left')} title="Left"><AlignLeft size={14} /></button>
-                            <button className={alignment === 'center' ? 'active' : ''} onClick={() => setAlignment('center')} title="Center"><AlignCenter size={14} /></button>
-                            <button className={alignment === 'right' ? 'active' : ''} onClick={() => setAlignment('right')} title="Right"><AlignRight size={14} /></button>
+                            <input type="range" min="1" max="120" value={scrollSpeed} onChange={e => setScrollSpeed(Number(e.target.value))} className="speed-slider" />
                         </div>
 
                         <div className="font-controls">
-                            <button onClick={() => setFontSize(f => Math.max(1, f - 0.2))} title="A-">A-</button>
-                            <button onClick={() => setFontSize(f => Math.min(4, f + 0.2))} title="A+">A+</button>
+                            <button onClick={() => setFontSize(f => Math.max(1, f - 0.2))}>A-</button>
+                            <button onClick={() => setFontSize(f => Math.min(4, f + 0.2))}>A+</button>
                         </div>
-
-                        {isPresenterMode && <button className="exit-btn" onClick={() => setPresenterMode(false)}>EXIT</button>}
                     </div>
-
-                    {mainTab === 'library' && (
-                        <div className="library-header-actions">
-                            <span className="library-count">{filteredLibrary.length} songs</span>
-                        </div>
-                    )}
                 </header>
 
-                {/* CHART TAB */}
-                {mainTab === 'chart' && (
-                    <div className="chart-viewer-outer" ref={scrollRef}>
-                        <motion.div key={currentSong?.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                            className={`chart-content align-${alignment}`} style={{ fontSize: `${fontSize}rem` }}>
-                            {currentSong ? (
-                                <>
-                                    <div className="chart-lead-header">
-                                        <h2 className="lead-title">{currentSong.name}</h2>
-                                        <p className="lead-artist">{currentSong.artist || 'Unknown Artist'}</p>
-                                        <div className="lead-meta">
-                                            {displayedKey !== '?' && <span className="meta-chip">Key: {displayedKey}</span>}
-                                            {currentSong.bpm && <span className="meta-chip">BPM: {currentSong.bpm}</span>}
-                                            {capo > 0 && <span className="meta-chip capo-chip">Capo: {capo}</span>}
-                                        </div>
-                                        <hr className="lead-divider" />
-                                    </div>
-                                    {parseChart(currentSong.lyrics)}
-                                </>
-                            ) : (
-                                <div className="placeholder">
-                                    <Music size={64} className="icon-faint" />
-                                    <p>Select a song from the library to begin.</p>
-                                </div>
-                            )}
-                        </motion.div>
-                    </div>
-                )}
-
-                {/* LIBRARY TAB */}
-                {mainTab === 'library' && (
-                    <div className="library-view">
-                        <div className="library-search-bar">
-                            <Search size={16} />
-                            <input placeholder="Search by title or artist..." value={libSearch} onChange={e => setLibSearch(e.target.value)} />
-                            {libSearch && <button className="clear-search" onClick={() => setLibSearch('')}><X size={14} /></button>}
-                        </div>
-
-                        <div className="library-table">
-                            <div className="library-table-header">
-                                <div className="lib-th num-col">#</div>
-                                <button className={`lib-th title-col ${sortField === 'name' ? 'active' : ''}`} onClick={() => handleSort('name')}>
-                                    TITLE {sortField === 'name' && <span>{sortAsc ? '↑' : '↓'}</span>}
-                                </button>
-                                <button className={`lib-th artist-col ${sortField === 'artist' ? 'active' : ''}`} onClick={() => handleSort('artist')}>
-                                    ARTIST {sortField === 'artist' && <span>{sortAsc ? '↑' : '↓'}</span>}
-                                </button>
-                                <button className={`lib-th key-col ${sortField === 'key' ? 'active' : ''}`} onClick={() => handleSort('key')}>
-                                    KEY {sortField === 'key' && <span>{sortAsc ? '↑' : '↓'}</span>}
-                                </button>
-                                <button className={`lib-th bpm-col ${sortField === 'bpm' ? 'active' : ''}`} onClick={() => handleSort('bpm')}>
-                                    BPM {sortField === 'bpm' && <span>{sortAsc ? '↑' : '↓'}</span>}
-                                </button>
-                                <button className={`lib-th genre-col ${sortField === 'genre' ? 'active' : ''}`} onClick={() => handleSort('genre')}>
-                                    GENRE {sortField === 'genre' && <span>{sortAsc ? '↑' : '↓'}</span>}
-                                </button>
-                                <div className="lib-th action-col"></div>
-                            </div>
-
-                            <div className="library-table-body">
-                                {filteredLibrary.map((song, idx) => (
-                                    <div key={song.id} className={`library-table-row ${currentSong?.id === song.id ? 'active' : ''}`}
-                                        onClick={() => openSongFromLibrary(song)}>
-                                        <div className="lib-td num-col">{idx + 1}</div>
-                                        <div className="lib-td title-col">{song.name}</div>
-                                        <div className="lib-td artist-col">{song.artist || '—'}</div>
-                                        <div className="lib-td key-col">{song.key || '—'}</div>
-                                        <div className="lib-td bpm-col">{song.bpm || '—'}</div>
-                                        <div className="lib-td genre-col">{song.genre || '—'}</div>
-                                        <div className="lib-td action-col">
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <div className="chart-viewer-outer" ref={scrollRef}>
+                    <motion.div key={currentSong?.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                        className="chart-content" style={{ fontSize: `${fontSize}rem` }}>
+                        {currentSong && parseChart(currentSong.lyrics)}
+                    </motion.div>
+                </div>
             </main>
         </div>
     );

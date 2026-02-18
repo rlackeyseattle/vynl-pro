@@ -1,100 +1,124 @@
+"use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import SocialFeed from "@/components/social/SocialFeed";
-import AudioPlayer from "@/components/audio/AudioPlayer";
-import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowRight, Lock, Disc, Radio, Activity, Mic2, Cpu, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { validateInviteCode } from "@/actions/invite";
 
-export default async function Home() {
-  const session = await auth();
-  const posts = await prisma.post.findMany({
-    orderBy: { createdAt: 'desc' },
-    include: {
-      user: {
-        select: {
-          name: true,
-          image: true,
-        },
-      },
-    },
-  });
+export default function Home() {
+  const [inviteCode, setInviteCode] = useState("");
+  const [error, setError] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
+  const handleInviteSubmit = () => {
+    if (!inviteCode.trim()) return;
+    setError("");
+
+    startTransition(async () => {
+      const result = await validateInviteCode(inviteCode);
+      if (result.valid) {
+        router.push(`/join?code=${encodeURIComponent(inviteCode)}`);
+      } else {
+        setError(result.message || "Invalid code");
+        // Shake animation could go here
+      }
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white font-[family-name:var(--font-geist-sans)] selection:bg-purple-500/30 pb-24">
+    <div className="min-h-screen bg-[#020202] text-white flex flex-col relative overflow-hidden font-sans selection:bg-white/20">
 
-      {/* Header */}
-      <header className="fixed top-0 w-full z-50 bg-[#0a0a0a]/80 backdrop-blur-sm border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="text-2xl font-bold tracking-tighter">
-            VYNL<span className="text-purple-500">.PRO</span>
-          </Link>
+      {/* Background Visuals */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] bg-purple-900/10 blur-[150px] rounded-full opacity-40 animate-pulse" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[60vw] h-[60vw] bg-blue-900/10 blur-[150px] rounded-full opacity-40 animate-pulse" style={{ animationDelay: "2s" }} />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
+      </div>
 
-          <nav className="hidden md:flex gap-8 text-sm font-medium text-gray-400">
-            <Link href="/roblackey" className="hover:text-white transition-colors">ROB LACKEY</Link>
-            <Link href="/codyjack" className="hover:text-white transition-colors">CODY JACK</Link>
-            <Link href="/rockettreelabs" className="hover:text-white transition-colors">ROCKET TREE</Link>
-            <Link href="/thegreatamericansoundtrack" className="hover:text-white transition-colors">PODCAST</Link>
-          </nav>
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col items-center justify-center relative z-10 p-6 text-center">
 
-          <div className="flex items-center gap-4">
-            <button className="text-sm font-bold text-gray-400 hover:text-white transition-colors">SIGN IN</button>
-            <button className="px-5 py-2 bg-white text-black text-sm font-bold rounded-full hover:bg-gray-200 transition-colors">JOIN</button>
-          </div>
-        </div>
-      </header>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+          className="mb-12"
+        >
+          <h1 className="text-6xl md:text-8xl font-black tracking-tighter mb-4 text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40">
+            VYNL.PRO
+          </h1>
+          <p className="text-sm md:text-base text-neutral-500 tracking-[0.3em] uppercase max-w-xl mx-auto leading-loose">
+            Universal Musician Utility Tool <br className="hidden md:block" /> & Social Network
+          </p>
+        </motion.div>
 
-      <main className="pt-32 px-6">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-[1fr_350px] gap-12">
+        {/* Gatekeeper Input */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5, duration: 0.8 }}
+          className="w-full max-w-sm relative group"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-full" />
 
-          {/* Left Column: Social Feed */}
-          <div className="space-y-12">
-            <div className="space-y-4">
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight">The Musician Hub.</h1>
-              <p className="text-neutral-500 max-w-lg">A decentralized stage for artists to connect, share, and build together.</p>
-            </div>
-
-            <SocialFeed
-              initialPosts={posts as any}
-              currentUser={session?.user}
+          <div className={`relative flex items-center bg-[#0a0a0a] border rounded-full p-1 pl-6 shadow-2xl transition-colors ${error ? 'border-red-500/50' : 'border-white/10'}`}>
+            <Lock size={14} className="text-neutral-600 mr-3" />
+            <input
+              type="text"
+              placeholder="ENTER INVITE CODE"
+              value={inviteCode}
+              onChange={(e) => { setInviteCode(e.target.value.toUpperCase()); setError(""); }}
+              onKeyDown={(e) => e.key === "Enter" && handleInviteSubmit()}
+              disabled={isPending}
+              className="bg-transparent border-none text-sm tracking-widest w-full focus:ring-0 text-white placeholder-neutral-700 font-mono uppercase"
             />
+            <button
+              onClick={handleInviteSubmit}
+              disabled={isPending}
+              className="bg-white text-black p-3 rounded-full hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isPending ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+            </button>
           </div>
 
-          {/* Right Column: Trending / Artist Discovery */}
-          <div className="hidden lg:block space-y-10 py-10">
-            <section className="space-y-6">
-              <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Featured Artists</h3>
-              <div className="space-y-4">
-                <Link href="/roblackey" className="flex items-center gap-4 group">
-                  <div className="w-10 h-10 bg-neutral-800 rounded-full group-hover:ring-2 ring-purple-500 transition-all flex items-center justify-center font-bold text-xs">RL</div>
-                  <div>
-                    <p className="text-sm font-bold group-hover:text-purple-400 transition-colors">Rob Lackey</p>
-                    <p className="text-xs text-neutral-500">3 tracks this week</p>
-                  </div>
-                </Link>
-                <Link href="/codyjack" className="flex items-center gap-4 group">
-                  <div className="w-10 h-10 bg-neutral-800 rounded-full group-hover:ring-2 ring-purple-500 transition-all flex items-center justify-center font-bold text-xs">CJ</div>
-                  <div>
-                    <p className="text-sm font-bold group-hover:text-purple-400 transition-colors">Cody Jack</p>
-                    <p className="text-xs text-neutral-500">New collection</p>
-                  </div>
-                </Link>
-              </div>
-            </section>
-
-            <section className="p-6 bg-gradient-to-br from-purple-900/20 to-blue-900/20 rounded-2xl border border-white/5 space-y-4">
-              <h3 className="text-sm font-bold">VYNL Stage Beta</h3>
-              <p className="text-xs text-neutral-400 leading-relaxed italic text-gray-400">"The best live performance tool for multi-instrumentalists."</p>
-              <Link href="/rockettreelabs" className="text-xs font-bold text-purple-400 hover:text-white transition-colors uppercase tracking-widest block">Learn More →</Link>
-            </section>
+          <div className="mt-6 min-h-[20px]">
+            {error ? (
+              <p className="text-[10px] text-red-500 font-mono tracking-widest uppercase animate-pulse">
+                {error}
+              </p>
+            ) : (
+              <p className="text-[10px] text-neutral-700 font-mono">
+                EXCLUSIVE ACCESS • BY INVITE ONLY
+              </p>
+            )}
           </div>
+        </motion.div>
 
-        </div>
       </main>
 
-      <footer className="py-20 text-center text-xs text-gray-700">
-        <p>© 2026 VYNL.PRO • Built for the Music Community</p>
+      {/* Subtle Footer Nav */}
+      <footer className="relative z-10 p-8 flex flex-col md:flex-row items-center justify-between text-[10px] text-neutral-600 font-mono gap-6 border-t border-white/5">
+        <div className="flex items-center gap-6">
+          <NavLink href="/rtlcc" icon={<Cpu size={12} />} label="RTLCC" />
+          <NavLink href="/mastering" icon={<Disc size={12} />} label="THE PRESS" />
+          <NavLink href="/stage" icon={<Mic2 size={12} />} label="STAGE" />
+          <NavLink href="/thegreatamericansoundtrack" icon={<Radio size={12} />} label="PODCAST" />
+          <NavLink href="/analyze" icon={<Activity size={12} />} label="ANALYZE" />
+        </div>
+        <p>© 2026 Rob Lackey • Built for the Music Community</p>
       </footer>
     </div>
+  );
+}
+
+function NavLink({ href, icon, label }: { href: string, icon: React.ReactNode, label: string }) {
+  return (
+    <Link href={href} className="flex items-center gap-2 hover:text-white transition-colors uppercase tracking-wider group">
+      <span className="text-neutral-700 group-hover:text-white transition-colors">{icon}</span>
+      {label}
+    </Link>
   );
 }
