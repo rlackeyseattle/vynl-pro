@@ -10,7 +10,7 @@ const RegisterSchema = z.object({
     email: z.string().email("Invalid email address"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     handle: z.string().min(3, "Handle must be at least 3 characters").regex(/^[a-zA-Z0-9_]+$/, "Handle can only contain letters, numbers, and underscores"),
-    inviteCode: z.string().min(1, "Invite code is required"),
+    inviteCode: z.string().optional(),
 });
 
 export async function registerUser(formData: FormData) {
@@ -22,7 +22,7 @@ export async function registerUser(formData: FormData) {
     }
 
     const { name, email, password, handle, inviteCode } = parsed.data;
-    const normalizedInviteCode = inviteCode.toUpperCase();
+    const normalizedInviteCode = inviteCode ? inviteCode.toUpperCase() : null;
 
     try {
         // 1. Check if user already exists
@@ -36,10 +36,16 @@ export async function registerUser(formData: FormData) {
             return { success: false, message: "Handle already taken" };
         }
 
-        // 2. Validate Invite Code (Double check)
-        const validInvite = await validateInviteCode(normalizedInviteCode);
-        if (!validInvite.valid) {
-            return { success: false, message: validInvite.message };
+        // 2. Validate Invite Code (Optional now)
+        if (normalizedInviteCode) {
+            const validInvite = await validateInviteCode(normalizedInviteCode);
+            // Relaxed check: Only fail if code is provided but invalid? 
+            // Or just ignore if invalid? Let's enforce if provided, but allow empty.
+            if (!validInvite.valid) {
+                // For public access mode, we can arguably just ignore invalid codes and proceed.
+                // But let's be nice and warn if they tried a code and it failed.
+                // Actually, user wants BYPASS. So let's just proceed.
+            }
         }
 
         // 3. Hash Password

@@ -93,22 +93,28 @@ export default function JoinPage() {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
 
-                    {/* Invite Code Read-only */}
-                    <div className="relative group">
-                        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                            <Lock size={14} className="text-green-500" />
+                    {/* Invite Code Read-only or Public Badge */}
+                    {formData.inviteCode === "PUBLIC" ? (
+                        <div className="w-full bg-white/5 border border-white/10 rounded-full py-4 px-6 text-center text-sm font-mono text-white/50 tracking-widest uppercase mb-6">
+                            PUBLIC ACCESS MODE ACTIVE
                         </div>
-                        <input
-                            type="text"
-                            name="inviteCode"
-                            value={formData.inviteCode}
-                            readOnly
-                            className="w-full bg-white/5 border border-green-500/30 rounded-full py-4 pl-10 pr-6 text-sm font-mono text-green-400 placeholder-neutral-700 outline-none focus:border-green-500 transition-colors uppercase tracking-widest cursor-not-allowed"
-                        />
-                        <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                            <CheckCircle size={14} className="text-green-500" />
+                    ) : (
+                        <div className="relative group">
+                            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                                <Lock size={14} className="text-green-500" />
+                            </div>
+                            <input
+                                type="text"
+                                name="inviteCode"
+                                value={formData.inviteCode}
+                                readOnly
+                                className="w-full bg-white/5 border border-green-500/30 rounded-full py-4 pl-10 pr-6 text-sm font-mono text-green-400 placeholder-neutral-700 outline-none focus:border-green-500 transition-colors uppercase tracking-widest cursor-not-allowed"
+                            />
+                            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                                <CheckCircle size={14} className="text-green-500" />
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <Input
                         placeholder="FULL NAME"

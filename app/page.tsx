@@ -1,32 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Lock, Disc, Radio, Activity, Mic2, Cpu, Loader2 } from "lucide-react";
+import { ArrowRight, Disc, Radio, Activity, Mic2, Cpu } from "lucide-react";
 import { motion } from "framer-motion";
-import { validateInviteCode } from "@/actions/invite";
 
 export default function Home() {
-  const [inviteCode, setInviteCode] = useState("");
-  const [error, setError] = useState("");
-  const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  const handleInviteSubmit = () => {
-    if (!inviteCode.trim()) return;
-    setError("");
-
-    startTransition(async () => {
-      const result = await validateInviteCode(inviteCode);
-      if (result.valid) {
-        router.push(`/join?code=${encodeURIComponent(inviteCode)}`);
-      } else {
-        setError(result.message || "Invalid code");
-        // Shake animation could go here
-      }
-    });
-  };
+  // const handleInviteSubmit = () => ... (Removed)
 
   return (
     <div className="min-h-screen bg-[#020202] text-white flex flex-col relative overflow-hidden font-sans selection:bg-white/20">
@@ -64,39 +46,24 @@ export default function Home() {
         >
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-full pointer-events-none" />
 
-          <form
-            onSubmit={(e) => { e.preventDefault(); handleInviteSubmit(); }}
-            className={`relative z-50 flex items-center bg-[#0a0a0a] border rounded-full p-1 pl-6 shadow-2xl transition-colors ${error ? 'border-red-500/50' : 'border-white/10'}`}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => router.push("/join?code=PUBLIC")}
+            className="group relative flex items-center justify-center gap-3 bg-white text-black px-8 py-4 rounded-full font-bold text-sm tracking-[0.2em] shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_-15px_rgba(255,255,255,0.5)] transition-all z-50 cursor-pointer"
           >
-            <Lock size={14} className="text-neutral-600 mr-3 flex-shrink-0" />
-            <input
-              type="text"
-              placeholder="ENTER INVITE CODE"
-              value={inviteCode}
-              onChange={(e) => { setInviteCode(e.target.value.toUpperCase()); setError(""); }}
-              disabled={isPending}
-              className="bg-transparent border-none text-sm tracking-widest flex-1 min-w-0 focus:ring-0 text-white placeholder-neutral-700 font-mono uppercase"
-            />
-            <button
-              type="submit"
-              disabled={isPending}
-              className="bg-white text-black p-3 rounded-full hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 relative z-20 cursor-pointer"
-            >
-              {isPending ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-            </button>
-          </form>
+            <span className="relative z-10">ENTER SYSTEM</span>
+            <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform" />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12 translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out" />
+          </motion.button>
 
-          <div className="mt-6 min-h-[20px]">
-            {error ? (
-              <p className="text-[10px] text-red-500 font-mono tracking-widest uppercase animate-pulse">
-                {error}
-              </p>
-            ) : (
-              <p className="text-[10px] text-neutral-700 font-mono">
-                EXCLUSIVE ACCESS • BY INVITE ONLY
-              </p>
-            )}
+          <div className="mt-6">
+            <p className="text-[10px] text-neutral-500 font-mono">
+              PUBLIC ACCESS ENABLED • NO INVITE REQUIRED
+            </p>
           </div>
+
+
         </motion.div>
 
       </main>
