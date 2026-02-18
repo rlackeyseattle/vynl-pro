@@ -83,23 +83,31 @@ async function main() {
                     ]),
                     musicianType: 'Songwriter / Multi-instrumentalist',
                     themeConfig: JSON.stringify({
-                        id: 'modern-dark',
-                        name: 'Modern Dark',
+                        id: 'modern-epk',
+                        name: 'Modern EPK',
                         colors: {
-                            background: '#121212',
-                            containerBg: '#1e1e1e',
-                            primary: '#bb86fc',
-                            text: '#e0e0e0',
-                            accent: '#03dac6',
-                            border: '#333333'
+                            background: '#050505',
+                            containerBg: '#0a0a0a',
+                            primary: '#ffffff',
+                            text: '#f5f5f5',
+                            secondaryText: '#888888',
+                            accent: '#3b82f6',
+                            border: '#222222'
                         },
                         fonts: {
-                            heading: 'Inter, sans-serif',
-                            body: 'Inter, sans-serif'
+                            heading: '"Outfit", sans-serif',
+                            body: '"Outfit", sans-serif'
                         },
                         layout: {
-                            density: 'comfortable',
-                            borderRadius: '8px'
+                            density: 'spacious',
+                            borderRadius: '0px',
+                            maxWidth: '1400px'
+                        },
+                        hero: {
+                            style: 'full-screen',
+                            overlayOpacity: 0.4,
+                            blur: 0,
+                            showScrollIndicator: true
                         }
                     }),
                 }
