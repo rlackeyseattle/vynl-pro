@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition, useEffect } from "react";
+import React, { useState, useTransition, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { registerUser } from "@/actions/register";
 import { signIn } from "next-auth/react";
@@ -9,6 +9,18 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 
 export default function JoinPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#020202] text-white flex items-center justify-center">
+                <Loader2 className="animate-spin text-white/50" size={32} />
+            </div>
+        }>
+            <JoinContent />
+        </Suspense>
+    );
+}
+
+function JoinContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const initialCode = searchParams.get("code") || "";
