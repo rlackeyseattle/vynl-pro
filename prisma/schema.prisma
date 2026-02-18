@@ -70,6 +70,7 @@ model Profile {
   interests    String?  // JSON string: { general: "", music: "", tech: "" }
   gear         String?  // JSON string or list
   socialLinks  String?  // JSON string
+  themeConfig  String?  // JSON string storing ThemeConfig
   location     String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

@@ -82,6 +82,26 @@ async function main() {
                         'A growing collection of vinyl'
                     ]),
                     musicianType: 'Songwriter / Multi-instrumentalist',
+                    themeConfig: JSON.stringify({
+                        id: 'modern-dark',
+                        name: 'Modern Dark',
+                        colors: {
+                            background: '#121212',
+                            containerBg: '#1e1e1e',
+                            primary: '#bb86fc',
+                            text: '#e0e0e0',
+                            accent: '#03dac6',
+                            border: '#333333'
+                        },
+                        fonts: {
+                            heading: 'Inter, sans-serif',
+                            body: 'Inter, sans-serif'
+                        },
+                        layout: {
+                            density: 'comfortable',
+                            borderRadius: '8px'
+                        }
+                    }),
                 }
             }
         }
