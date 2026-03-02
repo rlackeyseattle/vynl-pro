@@ -1,0 +1,61 @@
+/* Triggering Rebuild */
+@import "tailwindcss";
+
+@theme {
+    --color-vynl-teal: #00f2f2;
+    --color-vynl-orange: #ff4d00;
+}
+
+/* ── Console Theme Variables (defaults = VYNL Dark) ── */
+:root {
+    --background: #000000;
+    --foreground: #ffffff;
+
+    --ct-bg: #07070e;
+    --ct-bg-2: #0a0a12;
+    --ct-border: rgba(255, 255, 255, 0.05);
+    --ct-accent: #00f2f2;
+    --ct-accent-2: #7c3aed;
+    --ct-text: #ffffff;
+    --ct-text-muted: #6b7280;
+    --ct-glow: rgba(0, 242, 242, 0.15);
+}
+
+body {
+    background: black;
+    color: white;
+    font-family: var(--font-geist-sans), sans-serif;
+}
+
+/* ── Console theme-aware utility classes ── */
+.ct-bg {
+    background-color: var(--ct-bg);
+}
+
+.ct-bg-2 {
+    background-color: var(--ct-bg-2);
+}
+
+.ct-border {
+    border-color: var(--ct-border);
+}
+
+.ct-accent {
+    color: var(--ct-accent);
+}
+
+.ct-accent-bg {
+    background-color: var(--ct-accent);
+}
+
+.ct-glow {
+    box-shadow: 0 0 24px var(--ct-glow);
+}
+
+.ct-text {
+    color: var(--ct-text);
+}
+
+.ct-muted {
+    color: var(--ct-text-muted);
+}

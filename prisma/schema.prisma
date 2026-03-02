@@ -1,0 +1,368 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id             String        @id @default(cuid())
+  name           String?
+  email          String?       @unique
+  emailVerified  DateTime?
+  image          String?
+  password       String?
+  accounts       Account[]
+  followedBy     Follow[]      @relation("following")
+  following      Follow[]      @relation("follower")
+  usedInvite     InviteCode?   @relation("UsedInvite")
+  createdInvites InviteCode[]  @relation("CreatedInvites")
+  posts          Post[]
+  profile        Profile?
+  sessions       Session[]
+  songComments   SongComment[]
+  songLikes      SongLike[]
+  bandMemberships BandMember[]
+}
+
+model Profile {
+  id           String       @id @default(cuid())
+  userId       String       @unique
+  handle       String       @unique
+  bio          String?
+  avatarUrl    String?
+  bannerUrl    String?
+  heroImages   String?
+  musicianType String?
+  themeConfig  String?
+  socialLinks  String?
+  epkData      String?
+  profileType  String?      @default("artist")
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  setlists     Setlist[]
+  songs        Song[]
+  bandTeam     BandTeam?
+  bookings     Booking[]
+  contracts    Contract[]   @relation("ArtistContracts")
+  gearItems    GearItem[]
+}
+
+// ── Band Team ──────────────────────────────────────────────────────────────────
+model BandTeam {
+  id          String       @id @default(cuid())
+  profileId   String       @unique
+  name        String
+  description String?
+  inviteCode  String?      @unique
+  settings    String?      // JSON: permissions, visibility, etc.
+  createdAt   DateTime     @default(now())
+  profile     Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  members     BandMember[]
+  channels    TeamChannel[]
+}
+
+model BandMember {
+  id        String     @id @default(cuid())
+  teamId    String
+  userId    String?
+  name      String
+  email     String?
+  role      String     // artist, guitarist, bassist, drummer, vocalist, manager, tour-manager, guitar-tech, sound-engineer, street-team, merch, photographer
+  isAdmin   Boolean    @default(false)
+  isOwner   Boolean    @default(false)
+  status    String     @default("pending") // pending, active, inactive
+  joinedAt  DateTime   @default(now())
+  team      BandTeam   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User?      @relation(fields: [userId], references: [id])
+}
+
+model TeamChannel {
+  id        String    @id @default(cuid())
+  teamId    String
+  name      String    // general, band-business, setlists, merch, etc.
+  type      String    @default("text") // text, announcement
+  createdAt DateTime  @default(now())
+  team      BandTeam  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+// ── Venues ────────────────────────────────────────────────────────────────────
+model Venue {
+  id          String     @id @default(cuid())
+  name        String
+  address     String?
+  city        String
+  state       String
+  country     String     @default("US")
+  zip         String?
+  lat         Float?
+  lng         Float?
+  phone       String?
+  email       String?
+  website     String?
+  facebook    String?
+  instagram   String?
+  twitter     String?
+  capacity    Int?
+  venueType   String?    // bar, club, theater, coffeehouse, brewery, winery, festival, amphitheater, restaurant, arts-center
+  genres      String?    // JSON array of accepted genres
+  description String?
+  photoUrl    String?
+  coverUrl    String?
+  payType     String?    // door, guarantee, percentage, contra, hybrid
+  typicalFee  String?    // range string e.g. "$200-$800"
+  ageLimit    String?    // all-ages, 18+, 21+
+  soundSystem String?
+  backline    String?    // JSON: what's provided
+  loadIn      String?    // typical load-in time
+  soundcheck  String?
+  parking     Boolean?
+  greenRoom   Boolean?
+  verified    Boolean    @default(false)
+  dataSource  String?    // manual, scraped, submitted
+  region      String?    // pnw, etc.
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  bookings    Booking[]
+  contracts   Contract[] @relation("VenueContracts")
+}
+
+// ── Bookings ──────────────────────────────────────────────────────────────────
+model Booking {
+  id          String    @id @default(cuid())
+  profileId   String
+  venueId     String?
+  venueName   String?   // for manual entries
+  date        DateTime
+  startTime   String?
+  endTime     String?
+  fee         String?
+  status      String    @default("inquiry") // inquiry, pending, confirmed, cancelled, completed
+  notes       String?
+  contractId  String?   @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  venue       Venue?    @relation(fields: [venueId], references: [id])
+  contract    Contract? @relation(fields: [contractId], references: [id])
+}
+
+// ── Contracts ─────────────────────────────────────────────────────────────────
+model Contract {
+  id           String    @id @default(cuid())
+  artistId     String
+  venueId      String?
+  title        String
+  templateType String    @default("performance") // performance, recording, merch, licensing
+  content      String    // JSON with all contract fields
+  status       String    @default("draft") // draft, sent, signed, completed, cancelled
+  artistSigned Boolean   @default(false)
+  venueSigned  Boolean   @default(false)
+  signedAt     DateTime?
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  artist       Profile   @relation("ArtistContracts", fields: [artistId], references: [id], onDelete: Cascade)
+  venue        Venue?    @relation("VenueContracts", fields: [venueId], references: [id])
+  booking      Booking?
+}
+
+// ── PNW Music Ecosystem Directory ─────────────────────────────────────────────
+// Covers: artist, label, cover-band, dj, photographer, screen-printer,
+//         music-store, rehearsal-space, recording-studio, booking-agency,
+//         instrument-repair, venue (mirror), radio-station, podcast, manager,
+//         merch-company, promoter, pr-agency, graphic-designer, videographer
+model Directory {
+  id                  String    @id @default(cuid())
+  entityType          String    // see above
+  name                String
+  city                String
+  state               String
+  country             String    @default("US")
+  zip                 String?
+  address             String?
+  lat                 Float?
+  lng                 Float?
+  phone               String?
+  email               String?
+  website             String?
+  facebook            String?
+  instagram           String?
+  twitter             String?
+  youtube             String?
+  spotify             String?
+  bandcamp            String?
+  soundcloud          String?
+  description         String?
+  genres              String?   // JSON array
+  tags                String?   // JSON array of freeform tags
+  photoUrl            String?
+  coverUrl            String?
+  priceRange          String?   // e.g. "$50-$200/hr"
+  services            String?   // JSON array of service descriptors
+  verified            Boolean   @default(false)
+  dataSource          String?
+  region              String?
+  claimed             Boolean   @default(false)
+  claimedByProfileId  String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+// ── Gear Inventory ────────────────────────────────────────────────────────────
+model GearItem {
+  id           String    @id @default(cuid())
+  profileId    String
+  name         String
+  brand        String?
+  serialNumber String?
+  category     String    @default("misc")
+  status       String    @default("in")
+  notes        String?
+  assignedTo   String?
+  value        Float?
+  tags         String?
+  photoUrl     String?
+  checkedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  profile      Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+// ── Songs / Setlists ──────────────────────────────────────────────────────────
+model Song {
+  id        String        @id @default(cuid())
+  profileId String
+  title     String
+  artist    String?
+  genre     String?
+  bpm       Int?
+  key       String?
+  chartData String?
+  audioUrl  String?
+  isPublic  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  setlists  SetlistSong[]
+  profile   Profile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  comments  SongComment[]
+  likes     SongLike[]
+}
+
+model SongComment {
+  id        String   @id @default(cuid())
+  userId    String
+  songId    String
+  content   String
+  createdAt DateTime @default(now())
+  song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SongLike {
+  id     String @id @default(cuid())
+  userId String
+  songId String
+  song   Song   @relation(fields: [songId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, songId])
+}
+
+model Setlist {
+  id          String        @id @default(cuid())
+  profileId   String
+  name        String
+  description String?
+  date        DateTime?
+  profile     Profile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  songs       SetlistSong[]
+}
+
+model SetlistSong {
+  id        String  @id @default(cuid())
+  setlistId String
+  songId    String
+  order     Int
+  song      Song    @relation(fields: [songId], references: [id], onDelete: Cascade)
+  setlist   Setlist @relation(fields: [setlistId], references: [id], onDelete: Cascade)
+}
+
+// ── Social / Posts ────────────────────────────────────────────────────────────
+model Post {
+  id        String    @id @default(cuid())
+  userId    String
+  content   String
+  imageUrl  String?
+  createdAt DateTime  @default(now())
+  comments  Comment[]
+  likes     Like[]
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Like {
+  id     String @id @default(cuid())
+  userId String
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  content   String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Follow {
+  followerId  String
+  followingId String
+  following   User   @relation("following", fields: [followingId], references: [id])
+  follower    User   @relation("follower", fields: [followerId], references: [id])
+
+  @@id([followerId, followingId])
+}
+
+// ── Invite System ─────────────────────────────────────────────────────────────
+model InviteCode {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  createdBy String
+  usedBy    String?   @unique
+  label     String?   // optional note e.g. "For Seattle show crew"
+  maxUses   Int       @default(1)
+  useCount  Int       @default(0)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User?     @relation("UsedInvite", fields: [usedBy], references: [id])
+  creator   User      @relation("CreatedInvites", fields: [createdBy], references: [id])
+}
