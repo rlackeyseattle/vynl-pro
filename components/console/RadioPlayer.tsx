@@ -158,25 +158,43 @@ export function RadioProvider({ children }: { children: React.ReactNode }) {
     const [volume, setVolume] = useState(0.7);
     const [loading, setLoading] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const initializedRef = useRef(false);
 
     useEffect(() => {
-        if (!audioRef.current) {
-            audioRef.current = new Audio();
-            audioRef.current.volume = volume;
-        }
-        audioRef.current.addEventListener("playing", () => setLoading(false));
-        audioRef.current.addEventListener("waiting", () => setLoading(true));
-        audioRef.current.addEventListener("error", () => { setLoading(false); setPlaying(false); });
-        return () => { audioRef.current?.pause(); };
-    }, [volume]);
+        // Only init once — previous bug was recreating on every volume change
+        if (initializedRef.current) return;
+        initializedRef.current = true;
+        const audio = new Audio();
+        audio.volume = volume;
+        audio.preload = "none";
+        audioRef.current = audio;
+
+        const onPlaying = () => setLoading(false);
+        const onWaiting = () => setLoading(true);
+        const onError = () => { setLoading(false); setPlaying(false); };
+        audio.addEventListener("playing", onPlaying);
+        audio.addEventListener("waiting", onWaiting);
+        audio.addEventListener("error", onError);
+        return () => {
+            audio.pause();
+            audio.removeEventListener("playing", onPlaying);
+            audio.removeEventListener("waiting", onWaiting);
+            audio.removeEventListener("error", onError);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const play = useCallback((s: Station) => {
-        if (!audioRef.current || !s.stream) return;
+        if (!s.stream) return;
+        const audio = audioRef.current;
+        if (!audio) return;
         setLoading(true);
         setStation(s);
-        audioRef.current.src = s.stream;
-        audioRef.current.load();
-        audioRef.current.play()
+        // Stop current before switching
+        audio.pause();
+        audio.src = s.stream;
+        audio.load();
+        audio.play()
             .then(() => setPlaying(true))
             .catch(() => { setLoading(false); setPlaying(false); });
     }, []);

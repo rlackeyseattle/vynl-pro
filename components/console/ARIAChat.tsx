@@ -72,7 +72,7 @@ export default function ARIAChat() {
             {/* Floating button */}
             <motion.button
                 onClick={() => setOpen(o => !o)}
-                className="fixed bottom-20 right-5 z-50 w-12 h-12 rounded-2xl flex items-center justify-center shadow-2xl transition-all hover:scale-110"
+                className="fixed bottom-[72px] right-5 z-[95] w-12 h-12 rounded-2xl flex items-center justify-center shadow-2xl transition-all hover:scale-110"
                 style={{
                     background: "linear-gradient(135deg, #00f2f2, #a78bfa)",
                     boxShadow: "0 0 24px rgba(0,242,242,0.35)",
@@ -94,7 +94,7 @@ export default function ARIAChat() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.97 }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="fixed bottom-36 right-5 z-50 flex flex-col rounded-2xl overflow-hidden"
+                        className="fixed bottom-[136px] right-5 z-[95] flex flex-col rounded-2xl overflow-hidden"
                         style={{
                             width: "clamp(320px, 90vw, 420px)",
                             height: "clamp(400px, 60vh, 580px)",
