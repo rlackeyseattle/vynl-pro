@@ -4,6 +4,7 @@ import ConsoleSidebar from "@/components/console/ConsoleSidebar";
 import MobileTabBar from "@/components/console/MobileTabBar";
 import { ConsoleThemeProvider } from "@/components/console/ConsoleThemeProvider";
 import { RadioProvider, RadioPlayerBar } from "@/components/console/RadioPlayer";
+import ARIAChat from "@/components/console/ARIAChat";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -43,6 +44,9 @@ export default async function ConsoleLayout({
 
                     {/* Sitewide Radio Player — always visible at bottom */}
                     <RadioPlayerBar />
+
+                    {/* ARIA AI Chat — floats over all console pages */}
+                    <ARIAChat />
 
                     {/* Mobile bottom tab bar */}
                     <MobileTabBar />
