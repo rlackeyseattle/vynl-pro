@@ -152,7 +152,7 @@ export default async function ConsoleDashboard() {
                         {profile ? (
                             <p className="text-sm mt-1" style={{ color: "var(--ct-text-muted)" }}>
                                 <span style={{ color: "var(--ct-accent)" }}>@{profile.handle}</span>
-                                {" · "}{songCount} songs
+                                {" · "}{songCount} chord charts
                                 {(profile as any).musicianType && ` · ${(profile as any).musicianType}`}
                             </p>
                         ) : (
@@ -180,7 +180,7 @@ export default async function ConsoleDashboard() {
 
                 {/* Stats row */}
                 <div className="flex flex-wrap gap-2 mt-6">
-                    <StatPill icon={<Music2 size={13} />} label="Songs" value={songCount} color="var(--ct-accent)" />
+                    <StatPill icon={<Music2 size={13} />} label="Charts" value={songCount} color="var(--ct-accent)" />
                     <StatPill icon={<Star size={13} />} label="Gigs" value={0} color="#f59e0b" />
                     <StatPill icon={<TrendingUp size={13} />} label="Profile Views" value={0} color="#a78bfa" />
                     <StatPill icon={<UserPlus size={13} />} label="Followers" value={0} color="#f472b6" />

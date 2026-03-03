@@ -1,452 +1,239 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FileText, Save, Eye, Copy, Check, Music2, Globe, Instagram, Twitter, Youtube, Mail, Phone, ExternalLink, Download, Loader2, Plus, X } from "lucide-react";
+import { FileText, Download, Share2, Globe, Music2, Instagram, Youtube, Twitter, Link2, Image, Save, CheckCircle } from "lucide-react";
 
 interface EPKData {
-    artistName: string;
-    tagline: string;
+    name: string;
+    handle: string;
     bio: string;
     genre: string;
     location: string;
-    email: string;
-    phone: string;
     website: string;
     instagram: string;
     twitter: string;
     youtube: string;
     spotify: string;
-    pressQuotes: { quote: string; source: string }[];
-    achievements: string[];
-    techRiderNotes: string;
+    pressQuote: string;
+    pressQuoteSource: string;
     bookingEmail: string;
-    pressPhotoUrl: string;
+    managementEmail: string;
 }
 
-const DEFAULT_EPK: EPKData = {
-    artistName: "",
-    tagline: "",
-    bio: "",
-    genre: "",
-    location: "",
-    email: "",
-    phone: "",
-    website: "",
-    instagram: "",
-    twitter: "",
-    youtube: "",
-    spotify: "",
-    pressQuotes: [{ quote: "", source: "" }],
-    achievements: [""],
-    techRiderNotes: "",
-    bookingEmail: "",
-    pressPhotoUrl: "",
+const EMPTY: EPKData = {
+    name: "", handle: "", bio: "", genre: "", location: "",
+    website: "", instagram: "", twitter: "", youtube: "", spotify: "",
+    pressQuote: "", pressQuoteSource: "", bookingEmail: "", managementEmail: "",
 };
 
-type Tab = "edit" | "preview";
-
 export default function EPKPage() {
-    const [tab, setTab] = useState<Tab>("edit");
-    const [epk, setEpk] = useState<EPKData>(DEFAULT_EPK);
+    const [data, setData] = useState<EPKData>(EMPTY);
     const [saved, setSaved] = useState(false);
-    const [saving, setSaving] = useState(false);
-    const [copied, setCopied] = useState(false);
-    const [loading, setLoading] = useState(true);
+    const [tab, setTab] = useState<"edit" | "preview">("edit");
 
     useEffect(() => {
-        // Load from profile
         fetch("/api/profile")
-            .then((r) => r.json())
-            .then((data) => {
-                if (data.profile) {
-                    const social = data.profile.socialLinks ? JSON.parse(data.profile.socialLinks) : {};
-                    const epkData = data.profile.epkData ? JSON.parse(data.profile.epkData) : {};
-                    setEpk((prev) => ({
-                        ...prev,
-                        artistName: data.name || "",
-                        bio: data.profile.bio || "",
-                        genre: data.profile.musicianType || "",
-                        website: social.website || "",
-                        instagram: social.instagram || "",
-                        twitter: social.twitter || "",
-                        youtube: social.youtube || "",
-                        ...epkData,
-                    }));
-                }
-            })
-            .catch(() => { })
-            .finally(() => setLoading(false));
+            .then(r => r.json())
+            .then(d => {
+                if (d?.profile) setData(prev => ({ ...prev, ...d.profile }));
+            }).catch(() => { });
     }, []);
 
-    const update = (field: keyof EPKData, value: any) => {
-        setEpk((prev) => ({ ...prev, [field]: value }));
-        setSaved(false);
+    const set = (k: keyof EPKData, v: string) => setData(d => ({ ...d, [k]: v }));
+
+    const save = async () => {
+        await fetch("/api/profile", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+        });
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
     };
 
-    const handleSave = async () => {
-        setSaving(true);
-        try {
-            await fetch("/api/profile", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    bio: epk.bio,
-                    musicianType: epk.genre,
-                    socialLinks: JSON.stringify({
-                        website: epk.website,
-                        instagram: epk.instagram,
-                        twitter: epk.twitter,
-                        youtube: epk.youtube,
-                    }),
-                    epkData: JSON.stringify(epk),
-                }),
-            });
-            setSaved(true);
-            setTimeout(() => setSaved(false), 2500);
-        } catch {
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const copyEPKLink = () => {
-        navigator.clipboard.writeText(window.location.origin + "/epk/" + epk.artistName.toLowerCase().replace(/\s+/g, "-"));
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Loader2 size={24} className="animate-spin text-neutral-600" />
-            </div>
-        );
-    }
+    const shareUrl = data.handle ? `https://vynl.pro/${data.handle}` : "";
 
     return (
-        <div className="min-h-screen bg-[#07070e] text-white">
-            {/* Top Bar */}
-            <div className="sticky top-0 z-30 flex items-center justify-between px-8 py-4 bg-[#07070e]/80 backdrop-blur-xl border-b border-white/[0.05]">
+        <div className="min-h-screen pb-24" style={{ backgroundColor: "var(--ct-bg)" }}>
+            {/* Header */}
+            <div className="border-b px-8 py-5 flex items-center justify-between" style={{ borderColor: "var(--ct-border)" }}>
                 <div className="flex items-center gap-3">
-                    <FileText size={18} className="text-cyan-400" />
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                        style={{ backgroundColor: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)" }}>
+                        <FileText size={16} style={{ color: "#06b6d4" }} />
+                    </div>
                     <div>
-                        <h1 className="text-sm font-semibold leading-none">EPK Builder</h1>
-                        <p className="text-[10px] text-neutral-500 mt-0.5">Electronic Press Kit</p>
+                        <h1 className="text-xl font-black" style={{ color: "var(--ct-text)" }}>EPK Builder</h1>
+                        <p className="text-[11px]" style={{ color: "var(--ct-text-muted)" }}>Electronic Press Kit — your artist calling card</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    {/* Tabs */}
-                    <div className="flex bg-white/[0.04] rounded-xl p-1 gap-1">
-                        {(["edit", "preview"] as Tab[]).map((t) => (
-                            <button
-                                key={t}
-                                onClick={() => setTab(t)}
-                                className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${tab === t
-                                    ? "bg-white text-black"
-                                    : "text-neutral-400 hover:text-white"
-                                    }`}
-                            >
-                                {t === "edit" ? "Edit" : "Preview"}
+                    {/* Tab toggle */}
+                    <div className="flex rounded-xl p-1" style={{ backgroundColor: "rgba(255,255,255,0.05)" }}>
+                        {(["edit", "preview"] as const).map(t => (
+                            <button key={t} onClick={() => setTab(t)}
+                                className="px-4 py-1.5 rounded-lg text-[11px] font-semibold capitalize transition-all"
+                                style={tab === t ? { backgroundColor: "rgba(6,182,212,0.15)", color: "#06b6d4" } : { color: "var(--ct-text-muted)" }}>
+                                {t}
                             </button>
                         ))}
                     </div>
-                    <button
-                        onClick={copyEPKLink}
-                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/[0.05] border border-white/[0.08] text-xs text-neutral-300 hover:bg-white/[0.08] transition-all"
-                    >
-                        {copied ? <Check size={13} className="text-cyan-400" /> : <Copy size={13} />}
-                        {copied ? "Copied!" : "Share Link"}
+                    <button onClick={save}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:opacity-90"
+                        style={{ background: "linear-gradient(135deg, #06b6d4, #3b82f6)", color: "#000" }}>
+                        {saved ? <CheckCircle size={12} /> : <Save size={12} />}
+                        {saved ? "Saved!" : "Save EPK"}
                     </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500 text-black text-xs font-semibold hover:bg-cyan-400 transition-all disabled:opacity-50"
-                    >
-                        {saving ? <Loader2 size={13} className="animate-spin" /> : saved ? <Check size={13} /> : <Save size={13} />}
-                        {saving ? "Saving..." : saved ? "Saved!" : "Save EPK"}
-                    </button>
+                    {shareUrl && (
+                        <a href={shareUrl} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-all hover:opacity-80"
+                            style={{ borderColor: "var(--ct-border)", color: "var(--ct-text-muted)" }}>
+                            <Share2 size={12} /> Share
+                        </a>
+                    )}
                 </div>
             </div>
 
-            <div className="max-w-5xl mx-auto px-8 py-8">
-                {tab === "edit" ? (
-                    <div className="space-y-8">
-                        {/* Identity */}
-                        <Section title="Artist Identity" description="The core of your EPK — who you are and what you sound like.">
-                            <div className="grid grid-cols-2 gap-4">
-                                <Field label="Artist / Band Name" required>
-                                    <input value={epk.artistName} onChange={(e) => update("artistName", e.target.value)}
-                                        placeholder="Your stage name" className={inputClass} />
-                                </Field>
-                                <Field label="Genre / Style">
-                                    <input value={epk.genre} onChange={(e) => update("genre", e.target.value)}
-                                        placeholder="e.g. Indie Folk, Synth-Pop" className={inputClass} />
-                                </Field>
-                            </div>
-                            <Field label="Tagline" description="One punchy line. What makes you different?">
-                                <input value={epk.tagline} onChange={(e) => update("tagline", e.target.value)}
-                                    placeholder="e.g. Pacific Northwest storytelling with teeth" className={inputClass} />
-                            </Field>
-                            <Field label="Location">
-                                <input value={epk.location} onChange={(e) => update("location", e.target.value)}
-                                    placeholder="City, State" className={inputClass} />
-                            </Field>
-                            <Field label="Bio" description="Write your story. 150–300 words is ideal for press kits." required>
-                                <textarea value={epk.bio} onChange={(e) => update("bio", e.target.value)}
-                                    rows={6} placeholder="Your artist bio — past projects, sound, touring history, story..."
-                                    className={inputClass + " resize-none"} />
-                            </Field>
-                        </Section>
-
-                        {/* Contact */}
-                        <Section title="Contact & Booking" description="Make it easy for venues and press to reach you.">
-                            <div className="grid grid-cols-2 gap-4">
-                                <Field label="Booking Email" required>
-                                    <div className="relative"><Mail size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600" />
-                                        <input value={epk.bookingEmail} onChange={(e) => update("bookingEmail", e.target.value)}
-                                            placeholder="booking@youremail.com" className={inputClass + " pl-10"} /></div>
-                                </Field>
-                                <Field label="General Email">
-                                    <div className="relative"><Mail size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600" />
-                                        <input value={epk.email} onChange={(e) => update("email", e.target.value)}
-                                            placeholder="press@youremail.com" className={inputClass + " pl-10"} /></div>
-                                </Field>
-                                <Field label="Phone">
-                                    <div className="relative"><Phone size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600" />
-                                        <input value={epk.phone} onChange={(e) => update("phone", e.target.value)}
-                                            placeholder="(206) 555-0100" className={inputClass + " pl-10"} /></div>
-                                </Field>
-                                <Field label="Website">
-                                    <div className="relative"><Globe size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600" />
-                                        <input value={epk.website} onChange={(e) => update("website", e.target.value)}
-                                            placeholder="https://yoursite.com" className={inputClass + " pl-10"} /></div>
-                                </Field>
-                            </div>
-                        </Section>
-
-                        {/* Social & Music */}
-                        <Section title="Music & Social Links" description="Where people can find and listen to your music.">
-                            <div className="grid grid-cols-2 gap-4">
-                                <Field label="Spotify">
-                                    <div className="relative"><Music2 size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600" />
-                                        <input value={epk.spotify} onChange={(e) => update("spotify", e.target.value)}
-                                            placeholder="Spotify artist URL" className={inputClass + " pl-10"} /></div>
-                                </Field>
-                                <Field label="Instagram">
-                                    <div className="relative"><Instagram size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600" />
-                                        <input value={epk.instagram} onChange={(e) => update("instagram", e.target.value)}
-                                            placeholder="@handle" className={inputClass + " pl-10"} /></div>
-                                </Field>
-                                <Field label="YouTube">
-                                    <div className="relative"><Youtube size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600" />
-                                        <input value={epk.youtube} onChange={(e) => update("youtube", e.target.value)}
-                                            placeholder="YouTube channel URL" className={inputClass + " pl-10"} /></div>
-                                </Field>
-                                <Field label="Twitter / X">
-                                    <div className="relative"><Twitter size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600" />
-                                        <input value={epk.twitter} onChange={(e) => update("twitter", e.target.value)}
-                                            placeholder="@handle" className={inputClass + " pl-10"} /></div>
-                                </Field>
-                            </div>
-                        </Section>
-
-                        {/* Press Quotes */}
-                        <Section title="Press Quotes" description="What people are saying — critics, blogs, radio, other artists.">
-                            <div className="space-y-3">
-                                {epk.pressQuotes.map((q, i) => (
-                                    <div key={i} className="flex gap-2 items-start">
-                                        <div className="flex-1 space-y-2">
-                                            <textarea value={q.quote}
-                                                onChange={(e) => {
-                                                    const next = [...epk.pressQuotes];
-                                                    next[i] = { ...next[i], quote: e.target.value };
-                                                    update("pressQuotes", next);
-                                                }}
-                                                placeholder="Quote text..." rows={2}
-                                                className={inputClass + " resize-none"} />
-                                            <input value={q.source}
-                                                onChange={(e) => {
-                                                    const next = [...epk.pressQuotes];
-                                                    next[i] = { ...next[i], source: e.target.value };
-                                                    update("pressQuotes", next);
-                                                }}
-                                                placeholder="Source — e.g. The Stranger, KEXP, Pitchfork"
-                                                className={inputClass} />
-                                        </div>
-                                        <button title="Remove quote" onClick={() => update("pressQuotes", epk.pressQuotes.filter((_, j) => j !== i))}
-                                            className="mt-2 p-2 text-neutral-600 hover:text-red-400 transition-colors">
-                                            <X size={14} />
-                                        </button>
-                                    </div>
-                                ))}
-                                <button onClick={() => update("pressQuotes", [...epk.pressQuotes, { quote: "", source: "" }])}
-                                    className="flex items-center gap-2 text-xs text-neutral-500 hover:text-cyan-400 transition-colors">
-                                    <Plus size={13} /> Add Quote
-                                </button>
-                            </div>
-                        </Section>
-
-                        {/* Achievements */}
-                        <Section title="Highlights & Achievements" description="Notable gigs, placements, awards, milestones.">
-                            <div className="space-y-2">
-                                {epk.achievements.map((a, i) => (
-                                    <div key={i} className="flex gap-2">
-                                        <input value={a}
-                                            onChange={(e) => {
-                                                const next = [...epk.achievements];
-                                                next[i] = e.target.value;
-                                                update("achievements", next);
-                                            }}
-                                            placeholder="e.g. Opened for X at Y Venue, 2024"
-                                            className={inputClass + " flex-1"} />
-                                        <button title="Remove item" onClick={() => update("achievements", epk.achievements.filter((_, j) => j !== i))}
-                                            className="p-2 text-neutral-600 hover:text-red-400 transition-colors">
-                                            <X size={14} />
-                                        </button>
-                                    </div>
-                                ))}
-                                <button onClick={() => update("achievements", [...epk.achievements, ""])}
-                                    className="flex items-center gap-2 text-xs text-neutral-500 hover:text-cyan-400 transition-colors">
-                                    <Plus size={13} /> Add Highlight
-                                </button>
-                            </div>
-                        </Section>
-
-                        {/* Tech Rider */}
-                        <Section title="Technical Rider Notes" description="Basic stage requirements for venues. Full tech rider builder coming soon.">
-                            <textarea value={epk.techRiderNotes} onChange={(e) => update("techRiderNotes", e.target.value)}
-                                rows={4} placeholder="e.g. 3-piece band: drums, bass, guitar/vocals. Need 4 monitor mixes, DI for bass, SM58 for vocals..."
-                                className={inputClass + " resize-none"} />
-                        </Section>
-                    </div>
-                ) : (
-                    <EPKPreview epk={epk} />
-                )}
-            </div>
-        </div>
-    );
-}
-
-function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
-    return (
-        <div className="space-y-4">
-            <div className="border-b border-white/[0.06] pb-3">
-                <h2 className="text-sm font-semibold text-white">{title}</h2>
-                {description && <p className="text-xs text-neutral-500 mt-0.5">{description}</p>}
-            </div>
-            <div className="space-y-3">{children}</div>
-        </div>
-    );
-}
-
-function Field({ label, description, required, children }: { label: string; description?: string; required?: boolean; children: React.ReactNode }) {
-    return (
-        <div className="space-y-1.5">
-            <label className="text-xs font-medium text-neutral-300">
-                {label} {required && <span className="text-cyan-400">*</span>}
-            </label>
-            {description && <p className="text-[10px] text-neutral-600">{description}</p>}
-            {children}
-        </div>
-    );
-}
-
-const inputClass = "w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-cyan-500/50 transition-all";
-
-function EPKPreview({ epk }: { epk: EPKData }) {
-    return (
-        <div className="max-w-2xl mx-auto">
-            <div className="rounded-3xl overflow-hidden border border-white/[0.08] bg-gradient-to-b from-neutral-900 to-black">
-                {/* Hero */}
-                <div className="relative h-48 bg-gradient-to-br from-cyan-900/40 to-violet-900/40 flex items-end p-8">
-                    <div>
-                        {epk.artistName && <h1 className="text-4xl font-bold tracking-tight">{epk.artistName}</h1>}
-                        {epk.tagline && <p className="text-neutral-300 mt-1 text-sm">{epk.tagline}</p>}
-                        <div className="flex items-center gap-3 mt-2 text-xs text-neutral-500">
-                            {epk.genre && <span>{epk.genre}</span>}
-                            {epk.location && <><span>·</span><span>{epk.location}</span></>}
+            {tab === "edit" ? (
+                <div className="max-w-3xl mx-auto px-8 py-8 space-y-8">
+                    {/* Identity */}
+                    <section>
+                        <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-4" style={{ color: "var(--ct-text-muted)" }}>
+                            Identity
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Field label="Artist / Band Name" value={data.name} onChange={v => set("name", v)} placeholder="The Midnight Runners" />
+                            <Field label="Handle (your URL)" value={data.handle} onChange={v => set("handle", v.toLowerCase().replace(/\s/g, ""))} placeholder="midnightrunners" prefix="vynl.pro/" />
+                            <Field label="Genre" value={data.genre} onChange={v => set("genre", v)} placeholder="Indie Rock / Alt Country" />
+                            <Field label="Based In" value={data.location} onChange={v => set("location", v)} placeholder="Missoula, MT" />
                         </div>
-                    </div>
-                </div>
+                    </section>
 
-                <div className="p-8 space-y-8">
                     {/* Bio */}
-                    {epk.bio && (
-                        <div>
-                            <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-500 mb-3">About</h2>
-                            <p className="text-sm text-neutral-300 leading-relaxed whitespace-pre-wrap">{epk.bio}</p>
-                        </div>
-                    )}
+                    <section>
+                        <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-4" style={{ color: "var(--ct-text-muted)" }}>Bio</p>
+                        <textarea value={data.bio} onChange={e => set("bio", e.target.value)}
+                            placeholder="Write your artist bio here — tell your story, your sound, your why..."
+                            rows={6}
+                            className="w-full px-4 py-3 rounded-xl text-sm outline-none resize-none leading-relaxed"
+                            style={{ backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid var(--ct-border)", color: "var(--ct-text)" }} />
+                        <p className="text-[10px] mt-1" style={{ color: "var(--ct-text-muted)" }}>{data.bio.length} / 1000 characters</p>
+                    </section>
 
-                    {/* Achievements */}
-                    {epk.achievements.some(a => a.trim()) && (
-                        <div>
-                            <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-500 mb-3">Highlights</h2>
-                            <ul className="space-y-1.5">
-                                {epk.achievements.filter(a => a.trim()).map((a, i) => (
-                                    <li key={i} className="flex items-start gap-2 text-sm text-neutral-300">
-                                        <span className="text-cyan-400 mt-0.5">–</span> {a}
-                                    </li>
-                                ))}
-                            </ul>
+                    {/* Press Quote */}
+                    <section>
+                        <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-4" style={{ color: "var(--ct-text-muted)" }}>Press Quote</p>
+                        <div className="space-y-3">
+                            <textarea value={data.pressQuote} onChange={e => set("pressQuote", e.target.value)}
+                                placeholder='"A powerhouse live act that demands your attention."'
+                                rows={3}
+                                className="w-full px-4 py-3 rounded-xl text-sm outline-none resize-none"
+                                style={{ backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid var(--ct-border)", color: "var(--ct-text)" }} />
+                            <Field label="Source" value={data.pressQuoteSource} onChange={v => set("pressQuoteSource", v)} placeholder="The Missoulian, 2024" />
                         </div>
-                    )}
-
-                    {/* Press Quotes */}
-                    {epk.pressQuotes.some(q => q.quote.trim()) && (
-                        <div>
-                            <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-500 mb-3">Press</h2>
-                            <div className="space-y-4">
-                                {epk.pressQuotes.filter(q => q.quote.trim()).map((q, i) => (
-                                    <blockquote key={i} className="border-l-2 border-cyan-500/50 pl-4">
-                                        <p className="text-sm text-neutral-300 italic">&ldquo;{q.quote}&rdquo;</p>
-                                        {q.source && <cite className="text-xs text-neutral-600 not-italic mt-1 block">— {q.source}</cite>}
-                                    </blockquote>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                    </section>
 
                     {/* Links */}
-                    <div>
-                        <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-500 mb-3">Connect</h2>
-                        <div className="flex flex-wrap gap-2">
-                            {epk.website && <SocialChip href={epk.website} icon={<Globe size={12} />} label="Website" />}
-                            {epk.spotify && <SocialChip href={epk.spotify} icon={<Music2 size={12} />} label="Spotify" />}
-                            {epk.instagram && <SocialChip href={`https://instagram.com/${epk.instagram.replace("@", "")}`} icon={<Instagram size={12} />} label="Instagram" />}
-                            {epk.youtube && <SocialChip href={epk.youtube} icon={<Youtube size={12} />} label="YouTube" />}
-                            {epk.twitter && <SocialChip href={`https://twitter.com/${epk.twitter.replace("@", "")}`} icon={<Twitter size={12} />} label="Twitter" />}
+                    <section>
+                        <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-4" style={{ color: "var(--ct-text-muted)" }}>Links & Socials</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Field label="Website" icon={<Globe size={12} />} value={data.website} onChange={v => set("website", v)} placeholder="https://yourband.com" />
+                            <Field label="Spotify" icon={<Music2 size={12} />} value={data.spotify} onChange={v => set("spotify", v)} placeholder="Spotify artist URL" />
+                            <Field label="Instagram" icon={<Instagram size={12} />} value={data.instagram} onChange={v => set("instagram", v)} placeholder="@yourband" />
+                            <Field label="YouTube" icon={<Youtube size={12} />} value={data.youtube} onChange={v => set("youtube", v)} placeholder="YouTube channel URL" />
+                            <Field label="X / Twitter" icon={<Twitter size={12} />} value={data.twitter} onChange={v => set("twitter", v)} placeholder="@yourband" />
+                            <Field label="EPK Share Link" icon={<Link2 size={12} />} value={shareUrl} onChange={() => { }} placeholder="Set your handle above" readOnly />
                         </div>
-                    </div>
+                    </section>
 
                     {/* Booking */}
-                    {epk.bookingEmail && (
-                        <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
-                            <p className="text-xs text-neutral-400 mb-1">Booking Inquiries</p>
-                            <a href={`mailto:${epk.bookingEmail}`} className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1">
-                                <Mail size={13} /> {epk.bookingEmail}
-                            </a>
+                    <section>
+                        <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-4" style={{ color: "var(--ct-text-muted)" }}>Booking & Management</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Field label="Booking Email" value={data.bookingEmail} onChange={v => set("bookingEmail", v)} placeholder="booking@yourband.com" />
+                            <Field label="Management Email" value={data.managementEmail} onChange={v => set("managementEmail", v)} placeholder="management@yourband.com" />
                         </div>
-                    )}
+                    </section>
 
-                    {/* Tech Rider */}
-                    {epk.techRiderNotes && (
-                        <div>
-                            <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-500 mb-3">Technical Notes</h2>
-                            <p className="text-sm text-neutral-400 leading-relaxed">{epk.techRiderNotes}</p>
+                    {/* Photo upload placeholder */}
+                    <section>
+                        <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-4" style={{ color: "var(--ct-text-muted)" }}>Press Photos</p>
+                        <div className="border-2 border-dashed rounded-xl p-8 text-center transition-all hover:border-cyan-500/30"
+                            style={{ borderColor: "var(--ct-border)" }}>
+                            <Image size={28} className="mx-auto mb-3 opacity-25" />
+                            <p className="text-sm font-semibold mb-1" style={{ color: "var(--ct-text)" }}>Drop press photos here</p>
+                            <p className="text-[11px]" style={{ color: "var(--ct-text-muted)" }}>PNG, JPG up to 10MB · Hi-res recommended</p>
+                            <button className="mt-4 px-4 py-2 rounded-xl text-xs font-semibold border transition-all hover:opacity-80"
+                                style={{ borderColor: "var(--ct-border)", color: "var(--ct-text-muted)" }}>
+                                Choose Files
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            ) : (
+                /* Preview tab */
+                <div className="max-w-2xl mx-auto px-8 py-8">
+                    <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "var(--ct-border)", backgroundColor: "rgba(255,255,255,0.02)" }}>
+                        <div className="h-32 relative" style={{ background: "linear-gradient(135deg, rgba(6,182,212,0.2), rgba(139,92,246,0.2))" }}>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-20 h-20 rounded-full flex items-center justify-center text-4xl border-4"
+                                    style={{ borderColor: "var(--ct-bg)", backgroundColor: "rgba(0,0,0,0.5)" }}>🎸</div>
+                            </div>
+                        </div>
+                        <div className="p-8">
+                            <h2 className="text-2xl font-black mb-1" style={{ color: "var(--ct-text)" }}>{data.name || "Your Band Name"}</h2>
+                            <p className="text-sm mb-1" style={{ color: "#06b6d4" }}>{data.genre || "Genre"}</p>
+                            <p className="text-xs mb-4" style={{ color: "var(--ct-text-muted)" }}>{data.location}</p>
+                            {data.pressQuote && (
+                                <blockquote className="border-l-2 pl-4 mb-4 italic" style={{ borderColor: "#06b6d4", color: "var(--ct-text-muted)" }}>
+                                    &ldquo;{data.pressQuote}&rdquo;
+                                    {data.pressQuoteSource && <cite className="block text-[11px] mt-1 not-italic">— {data.pressQuoteSource}</cite>}
+                                </blockquote>
+                            )}
+                            <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--ct-text-muted)" }}>{data.bio || "Your bio will appear here..."}</p>
+                            <div className="flex flex-wrap gap-3">
+                                {data.bookingEmail && (
+                                    <a href={`mailto:${data.bookingEmail}`}
+                                        className="px-4 py-2 rounded-xl text-xs font-bold"
+                                        style={{ background: "linear-gradient(135deg, #06b6d4, #3b82f6)", color: "#000" }}>
+                                        Book Us
+                                    </a>
+                                )}
+                                {data.website && <a href={data.website} target="_blank" rel="noopener noreferrer" className="px-4 py-2 rounded-xl text-xs font-semibold border" style={{ borderColor: "var(--ct-border)", color: "var(--ct-text-muted)" }}>Website</a>}
+                                {data.spotify && <a href={data.spotify} target="_blank" rel="noopener noreferrer" className="px-4 py-2 rounded-xl text-xs font-semibold border" style={{ borderColor: "var(--ct-border)", color: "#1db954" }}>Spotify</a>}
+                            </div>
+                        </div>
+                    </div>
+                    {shareUrl && (
+                        <div className="mt-4 flex items-center gap-3 px-4 py-3 rounded-xl border" style={{ borderColor: "var(--ct-border)", backgroundColor: "rgba(255,255,255,0.02)" }}>
+                            <Link2 size={12} style={{ color: "#06b6d4" }} />
+                            <span className="text-xs flex-1 font-mono" style={{ color: "var(--ct-text-muted)" }}>{shareUrl}</span>
+                            <button onClick={() => navigator.clipboard.writeText(shareUrl)}
+                                className="text-[10px] px-3 py-1 rounded-lg" style={{ color: "#06b6d4", backgroundColor: "rgba(6,182,212,0.1)" }}>
+                                Copy
+                            </button>
                         </div>
                     )}
                 </div>
-            </div>
+            )}
         </div>
     );
 }
 
-function SocialChip({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
+function Field({ label, value, onChange, placeholder, prefix, readOnly, icon }: {
+    label: string; value: string; onChange: (v: string) => void;
+    placeholder?: string; prefix?: string; readOnly?: boolean;
+    icon?: React.ReactNode;
+}) {
     return (
-        <a href={href} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-xs text-neutral-300 hover:text-white hover:border-white/20 transition-all">
-            {icon} {label} <ExternalLink size={10} className="text-neutral-600" />
-        </a>
+        <div>
+            <label className="block text-[10px] font-semibold mb-1.5 uppercase tracking-wider" style={{ color: "var(--ct-text-muted)" }}>{label}</label>
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border" style={{ backgroundColor: "rgba(255,255,255,0.04)", borderColor: "var(--ct-border)" }}>
+                {(prefix || icon) && <span className="text-xs flex-shrink-0" style={{ color: "var(--ct-text-muted)" }}>{icon || prefix}</span>}
+                <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} readOnly={readOnly}
+                    className="flex-1 bg-transparent outline-none text-sm"
+                    style={{ color: readOnly ? "var(--ct-text-muted)" : "var(--ct-text)" }} />
+            </div>
+        </div>
     );
 }

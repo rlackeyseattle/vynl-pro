@@ -1,92 +1,54 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-    const session = await auth();
-
-    // Local bypass
-    if (!session && process.env.NODE_ENV !== 'development') {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const userEmail = session?.user?.email || "rlackey.seattle@gmail.com";
-
     try {
-        const user = await prisma.user.findUnique({
-            where: { email: userEmail },
-            include: {
-                profile: {
-                    include: {
-                        songs: {
-                            orderBy: { createdAt: "desc" }
-                        }
-                    }
-                }
-            }
-        });
-
-        if (!user || !user.profile) {
-            return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+        const session = await auth();
+        if (!session?.user?.email) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
-
-        return NextResponse.json({
-            name: user.name,
-            email: user.email,
-            image: user.image,
-            profile: {
-                ...user.profile,
-                songs: user.profile.songs,
-            },
+        const user = await prisma.user.findUnique({
+            where: { email: session.user.email },
+            include: { profile: true },
         });
-    } catch (error) {
-        console.error("Profile fetch error:", error);
-        return NextResponse.json({ error: "Failed to fetch profile" }, { status: 500 });
+        return NextResponse.json({ profile: user?.profile || null });
+    } catch (e) {
+        return NextResponse.json({ error: "Server error" }, { status: 500 });
     }
 }
 
-export async function PATCH(request: Request) {
-    const session = await auth();
-
-    // Local bypass
-    if (!session && process.env.NODE_ENV !== 'development') {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const userEmail = session?.user?.email || "rlackey.seattle@gmail.com";
-
+export async function PATCH(req: NextRequest) {
     try {
-        const body = await request.json();
-        const { handle, bio, musicianType, socialLinks, themeConfig, avatarUrl, bannerUrl, epkData, heroImages } = body;
+        const session = await auth();
+        if (!session?.user?.email) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+        const body = await req.json();
+        const user = await prisma.user.findUnique({ where: { email: session.user.email }, include: { profile: true } });
+        if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-        const user = await prisma.user.findUnique({
-            where: { email: userEmail }
-        });
+        const allowedFields = ["name", "handle", "bio", "genre", "location", "website",
+            "instagram", "twitter", "youtube", "spotify", "pressQuote",
+            "pressQuoteSource", "bookingEmail", "managementEmail"];
 
-        if (!user) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 });
+        const data: Record<string, string> = {};
+        for (const k of allowedFields) {
+            if (body[k] !== undefined) data[k] = body[k];
         }
 
-        // Build update data — only include provided fields
-        const updateData: any = {};
-        if (handle !== undefined) updateData.handle = handle;
-        if (bio !== undefined) updateData.bio = bio;
-        if (musicianType !== undefined) updateData.musicianType = musicianType;
-        if (socialLinks !== undefined) updateData.socialLinks = socialLinks;
-        if (themeConfig !== undefined) updateData.themeConfig = themeConfig;
-        if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
-        if (bannerUrl !== undefined) updateData.bannerUrl = bannerUrl;
-        if (epkData !== undefined) updateData.epkData = epkData;
-        if (heroImages !== undefined) updateData.heroImages = heroImages;
+        if (user.profile) {
+            await prisma.profile.update({ where: { userId: user.id }, data });
+        } else {
+            // Auto-generate handle if not provided — required & unique
+            const baseHandle = (data.handle || user.email?.split("@")[0] || "artist")
+                .toLowerCase().replace(/[^a-z0-9]/g, "");
+            const handle = `${baseHandle}${Math.floor(Math.random() * 9000 + 1000)}`;
+            await prisma.profile.create({ data: { userId: user.id, handle, ...data } });
+        }
 
-        const profile = await prisma.profile.update({
-            where: { userId: user.id },
-            data: updateData,
-        });
-
-        return NextResponse.json(profile);
-    } catch (error) {
-        console.error("Profile update error:", error);
-        return NextResponse.json({ error: "Failed to update profile" }, { status: 500 });
+        return NextResponse.json({ success: true });
+    } catch (e) {
+        return NextResponse.json({ error: "Server error" }, { status: 500 });
     }
 }
