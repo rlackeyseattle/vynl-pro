@@ -20,6 +20,7 @@ import {
     Package,
     Cpu,
     Globe,
+    BookOpen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signOut } from "next-auth/react";
@@ -97,6 +98,14 @@ const SECTIONS = [
                 description: "Song Gen, Setlists & Chat",
                 color: "from-rose-400 to-rose-600",
                 accent: "text-rose-400",
+            },
+            {
+                name: "Knowledge",
+                href: "/console/knowledge",
+                icon: BookOpen,
+                description: "Guides & Manuals",
+                color: "from-teal-400 to-cyan-600",
+                accent: "text-teal-400",
             },
             {
                 name: "Toolkit",

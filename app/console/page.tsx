@@ -64,6 +64,13 @@ const TOOLS = [
         desc: "Lessons & practice tools",
         vibe: "🎼 woodshed",
     },
+    {
+        name: "Knowledge", href: "/console/knowledge", icon: BookOpen,
+        gradient: "from-cyan-400 to-teal-500", glow: "rgba(6,182,212,0.3)",
+        desc: "DAW manuals, hotkeys & guides",
+        vibe: "📖 knowledge base",
+        badge: "New",
+    },
 ];
 
 // Easter egg: hidden messages scattered in console

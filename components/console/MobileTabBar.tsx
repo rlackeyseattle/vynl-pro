@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
     LayoutDashboard, Music2, Mic2, Radio, Guitar, MessageCircle,
-    X, Users, UserCircle, Search, Send, Hash
+    X, Users, UserCircle, Search, Send, Hash, BookOpen
 } from "lucide-react";
 
 const ZONES = [
@@ -13,7 +13,7 @@ const ZONES = [
     { name: "Stage", href: "/console/stage", icon: Music2 },
     { name: "Booking", href: "/console/wire", icon: Mic2 },
     { name: "Radio", href: "/console/lab", icon: Radio },
-    { name: "Gear", href: "/console/toolkit/gear", icon: Guitar },
+    { name: "Know", href: "/console/knowledge", icon: BookOpen },
 ];
 
 // ── Mock socials data ──────────────────────────────────────────────────────────
