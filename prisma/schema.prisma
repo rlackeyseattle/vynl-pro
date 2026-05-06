@@ -6,15 +6,7 @@ datasource db {
   provider = "sqlite"
 }
 
-enum Role {
-  BAND
-  VENUE
-}
-
-enum BookingStatus {
-  AVAILABLE
-  BOOKED
-}
+// Enums removed as SQLite doesn't support them natively; fields already use Strings.
 
 model User {
   id            String    @id @default(cuid())
