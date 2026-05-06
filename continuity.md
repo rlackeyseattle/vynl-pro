@@ -36,14 +36,16 @@ Vynl.pro has been completely rebuilt from the ground up as a "Universal Musician
    - API route `/api/venues/crawl` for automated venue data extraction.
 
 ## 🚧 Current Deployment State
-- **Repository**: `rlackeyseattle/vynl-pro`
+- **Repository**: `rlackeyseattle/vynl-pro` (and `vynl.pro`)
 - **Branches**: Both `master` and `main` are synced with the latest code.
 - **Vercel**: Deployment is connected to `vynl-pro.vercel.app` and `vynl.pro`.
-- **Known Fixes**: 
-   - Resolved Prisma 7 validation errors (removed `url` from schema, moved to config).
+- **Recent Fixes Applied**: 
+   - Moved Prisma 7 `url` out of `schema.prisma` and into `prisma.config.ts` (with a fallback URL).
+   - Cleaned up package.json (moved `prisma` to `devDependencies`, added `postinstall` hook).
    - Removed SQLite-incompatible `enum` types.
    - Bypassed ESLint/TS build checks in `next.config.mjs` to force deployment.
-- **Current Blocker**: The site is taking longer than expected to update/reflect changes on the production domain.
+- **CURRENT BLOCKER (End of Session)**: Vercel builds are still failing at the `npm run build` stage (exiting with code 1). Vercel is now successfully seeing the new commits, but the Next.js/Prisma build pipeline is failing remotely. 
+- **IMMEDIATE NEXT STEP**: At the start of the next session, we **MUST retrieve the Vercel build log** (specifically the last 20 lines before the "exited with 1" error) to identify the exact cause of the crash.
 
 ## 🔜 Next Work Paths
 - [ ] **Live Chat Integration**: Connect the landing page chat demo to the `Message` model in Prisma.
