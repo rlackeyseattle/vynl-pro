@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { ParallaxBackground } from "@/components/ParallaxBackground";
 import { MusicPlayer } from "@/components/MusicPlayer";
-import { Youtube, Instagram, Twitter, Globe, Calendar, ShoppingBag, Radio } from "lucide-react";
+import { Play, Camera, Send, Globe, Calendar, ShoppingBag, Radio } from "lucide-react";
 
 export default function ProfilePage() {
   // Mock data for the stylized EPK
@@ -43,10 +43,10 @@ export default function ProfilePage() {
           </motion.div>
           
           <div className="flex items-center justify-center gap-6 pt-12">
-            <SocialIcon icon={<Youtube />} />
-            <SocialIcon icon={<Instagram />} />
-            <SocialIcon icon={<Twitter />} />
-            <SocialIcon icon={<Globe />} />
+            <SocialIcon platform="youtube" />
+            <SocialIcon platform="instagram" />
+            <SocialIcon platform="twitter" />
+            <SocialIcon platform="website" />
           </div>
         </div>
       </ParallaxBackground>
@@ -131,10 +131,13 @@ export default function ProfilePage() {
   );
 }
 
-function SocialIcon({ icon }: { icon: React.ReactNode }) {
+function SocialIcon({ platform }: { platform: "youtube" | "instagram" | "twitter" | "website" }) {
   return (
     <a href="#" className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center hover:bg-pink-600 transition-all hover:scale-110 border border-white/5">
-      {icon}
+      {platform === "youtube" && <Play size={20} />}
+      {platform === "instagram" && <Camera size={20} />}
+      {platform === "twitter" && <Send size={20} />}
+      {platform === "website" && <Globe size={20} />}
     </a>
   );
 }
