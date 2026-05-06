@@ -11,6 +11,7 @@ Vynl.pro has been completely rebuilt from the ground up as a "Universal Musician
 - **Icons**: Lucide-React (Using generic substitutes for removed brand icons)
 - **Audio**: Howler.js for the professional EPK player
 - **Maps**: Leaflet for the Touring Hotspot Engine
+- **Intelligence**: X.AI Grok-4.20-reasoning for automated venue crawling and matching
 
 ## ✨ Features Implemented (Session 1 & 2)
 1. **Ultra-Revamped Landing Page**: 
@@ -30,6 +31,9 @@ Vynl.pro has been completely rebuilt from the ground up as a "Universal Musician
    - Logic for finding lodging/venues within 10-hour routes.
 5. **Onboarding Wizard**:
    - 3-step startup process for new profiles.
+6. **Venue Intelligence API**:
+   - Integrated `src/lib/xai.ts` using Grok-4.20-reasoning.
+   - API route `/api/venues/crawl` for automated venue data extraction.
 
 ## 🚧 Current Deployment State
 - **Repository**: `rlackeyseattle/vynl-pro`
